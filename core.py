@@ -385,8 +385,9 @@ class SPR_AVS_PDO(metadata):
 
 
 class F_VRDO(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw, bit_loc, field, **kwargs):
         super().__init__(raw, bit_loc, field)
+        self.__pdo = kwargs["pdo"]
         self.value = [
             metadata(raw[0:4], (31, 28), "Object Position", int(raw[0:4], 2)),
             metadata(raw[4], 27, "Giveback", bool(int(raw[4]))),
@@ -410,10 +411,14 @@ class F_VRDO(metadata):
         else:
             return self.value[field]
 
+    def get_pdo(self) -> metadata:
+        return self.__pdo
+
 
 class BRDO(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw, bit_loc, field, **kwargs):
         super().__init__(raw, bit_loc, field)
+        self.__pdo = kwargs["pdo"]
         self.value = [
             metadata(raw[0:4], (31, 28), "Object Position", int(raw[0:4], 2)),
             metadata(raw[4], 27, "Giveback", bool(int(raw[4]))),  # Deprecated, should be 0
@@ -436,11 +441,15 @@ class BRDO(metadata):
             return self.field_map.get(field, None)
         else:
             return self.value[field]
+    
+    def get_pdo(self) -> metadata:
+        return self.__pdo
 
 
 class PPS_RDO(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw, bit_loc, field, **kwargs):
         super().__init__(raw, bit_loc, field)
+        self.__pdo = kwargs["pdo"]
         self.value = [
             metadata(raw[0:4], (31, 28), "Object Position", int(raw[0:4], 2)),
             metadata(raw[4], 27, "Reserved"),
@@ -464,11 +473,15 @@ class PPS_RDO(metadata):
             return self.field_map.get(field, None)
         else:
             return self.value[field]
+    
+    def get_pdo(self) -> metadata:
+        return self.__pdo
 
 
 class AVS_RDO(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw, bit_loc, field, **kwargs):
         super().__init__(raw, bit_loc, field)
+        self.__pdo = kwargs["pdo"]
         self.value = [
             metadata(raw[0:4], (31, 28), "Object Position", int(raw[0:4], 2)),
             metadata(raw[4], 27, "Reserved"),
@@ -492,6 +505,9 @@ class AVS_RDO(metadata):
             return self.field_map.get(field, None)
         else:
             return self.value[field]
+    
+    def get_pdo(self) -> metadata:
+        return self.__pdo
 
 
 class Source_Capabilities(metadata):
@@ -538,18 +554,17 @@ class Request(metadata):
         sub_raw = lst2str(data)
         pdo = pdo_list[int(sub_raw[0:4], 2) - 1]
         if pdo["Supply Type"].value == "FPDO":
-            self.value.append(F_VRDO(sub_raw, (0, 31), "FRDO"))
+            self.value.append(F_VRDO(sub_raw, (0, 31), "FRDO", pdo=pdo))
         elif pdo["Supply Type"].value == "VPDO":
-            self.value.append(F_VRDO(sub_raw, (0, 31), "VRDO"))
+            self.value.append(F_VRDO(sub_raw, (0, 31), "VRDO", pdo=pdo))
         elif pdo["Supply Type"].value == "BPDO":
-            self.value.append(BRDO(sub_raw, (0, 31), "BRDO"))
+            self.value.append(BRDO(sub_raw, (0, 31), "BRDO", pdo=pdo))
         elif pdo["Supply Type"].value == "APDO":
             if pdo["APDO Type"].value == "SPR PPS":
-                self.value.append(PPS_RDO(sub_raw, (0, 31), "PPS RDO"))
-            elif pdo["APDO Type"].value == "EPR AVS":
-                self.value.append(AVS_RDO(sub_raw, (0, 31), "EPR AVS"))
+                self.value.append(PPS_RDO(sub_raw, (0, 31), "PPS RDO", pdo=pdo))
             elif pdo["APDO Type"].value == "SPR AVS":
-                self.value.append(AVS_RDO(sub_raw, (0, 31), "SPR AVS"))
+                self.value.append(AVS_RDO(sub_raw, (0, 31), "SPR AVS RDO", pdo=pdo))
+
 
         self.field_map = {m.field: m for m in self.value}
         if "Reserved" in self.field_map:
@@ -563,153 +578,189 @@ class Request(metadata):
 
 
 class BIST(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Objects")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Objects")
+        self.raw = lst2str(data, '>')
 
 
 class Sink_Capabilities(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Objects")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Objects")
+        self.raw = lst2str(data, '>')
 
 
 class Battery_Status(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Objects")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Objects")
+        self.raw = lst2str(data, '>')
 
 
 class Alert(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Objects")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Objects")
+        self.raw = lst2str(data, '>')
 
 
 class Get_Country_Info(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Objects")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Objects")
+        self.raw = lst2str(data, '>')
 
 
 class Enter_USB(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Objects")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Objects")
+        self.raw = lst2str(data, '>')
 
 
 class EPR_Request(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Objects")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Objects")
+        self.raw = lst2str(data, '>')
 
 
 class EPR_Mode(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Objects")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Objects")
+        self.raw = lst2str(data, '>')
 
 
 class Source_Info(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Objects")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Objects")
+        self.raw = lst2str(data, '>')
 
 
 class Revision(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Objects")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Objects")
+        self.raw = lst2str(data, '>')
 
 
 class Vendor_Defined(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Objects")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Objects")
+        self.raw = lst2str(data, '>')
 
 
 class Source_Capabilities_Extended(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Status(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Get_Battery_Cap(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Get_Battery_Status(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Battery_Capabilities(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Get_Manufacturer_Info(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Manufacturer_Info(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Security_Request(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Security_Response(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Firmware_Update_Request(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Firmware_Update_Response(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class PPS_Status(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Country_Info(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Country_Codes(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Sink_Capabilities_Extended(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Extended_Control(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class EPR_Source_Capabilities(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class EPR_Sink_Capabilities(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class Vendor_Defined_Extended(metadata):
-    def __init__(self, raw, bit_loc, **kwargs):
-        super().__init__(raw, bit_loc, "Data Block")
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
+
+
+class Reserved(metadata):
+    def __init__(self, data, bit_loc, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="Data Block")
+        self.raw = lst2str(data, '>')
 
 
 class pd_msg(metadata):
