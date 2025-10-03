@@ -267,8 +267,8 @@ class FPDO(metadata):
             metadata(raw[8], 23, "EPR Capable", bool(int(raw[8]))),
             metadata(raw[9], 22, "Reserved"),
             metadata(raw[10:12], (21, 20), "Peak Current", raw[10:12]),
-            metadata(raw[12:22], (19, 10), "Voltage", f"{int(raw[12:22], 2) * 0.05}V"),
-            metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) * 0.01}A")
+            metadata(raw[12:22], (19, 10), "Voltage", f"{int(raw[12:22], 2) * 0.05:.2f}V"),
+            metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) * 0.01:.2f}A")
         ]
 
         self._field_map = {m.field(): m for m in self._value}
@@ -287,9 +287,9 @@ class BPDO(metadata):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "BPDO"),
-            metadata(raw[2:12], (29, 20), "Maximum Voltage", f"{int(raw[2:12], 2) * 0.05}V"),
-            metadata(raw[12:22], (19, 10), "Minimum Voltage", f"{int(raw[12:22], 2) * 0.05}V"),
-            metadata(raw[22:32], (9, 0), "Maximum Allowable Power", f"{int(raw[22:32], 2) * 0.25}W")
+            metadata(raw[2:12], (29, 20), "Maximum Voltage", f"{int(raw[2:12], 2) * 0.05:.2f}V"),
+            metadata(raw[12:22], (19, 10), "Minimum Voltage", f"{int(raw[12:22], 2) * 0.05:.2f}V"),
+            metadata(raw[22:32], (9, 0), "Maximum Allowable Power", f"{int(raw[22:32], 2) * 0.25:.2f}W")
         ]
 
         self._field_map = {m.field(): m for m in self._value}
@@ -308,9 +308,9 @@ class VPDO(metadata):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "BPDO"),
-            metadata(raw[2:12], (29, 20), "Maximum Voltage", f"{int(raw[2:12], 2) * 0.05}V"),
-            metadata(raw[12:22], (19, 10), "Minimum Voltage", f"{int(raw[12:22], 2) * 0.05}V"),
-            metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) * 0.01}A")
+            metadata(raw[2:12], (29, 20), "Maximum Voltage", f"{int(raw[2:12], 2) * 0.05:.2f}V"),
+            metadata(raw[12:22], (19, 10), "Minimum Voltage", f"{int(raw[12:22], 2) * 0.05:.2f}V"),
+            metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) * 0.01:.2f}A")
         ]
 
         self._field_map = {m.field(): m for m in self._value}
@@ -332,11 +332,11 @@ class PPS_PDO(metadata):
             metadata(raw[2:4], (29, 28), "APDO Type", "SPR PPS"),
             metadata(raw[4], 27, "PPS Power Limited", bool(int(raw[4]))),
             metadata(raw[5:7], (26, 25), "Reserved"),
-            metadata(raw[7:15], (24, 17), "Maximum Voltage", f"{int(raw[7:15], 2) * 0.1}V"),
+            metadata(raw[7:15], (24, 17), "Maximum Voltage", f"{int(raw[7:15], 2) * 0.1:.2f}V"),
             metadata(raw[15], 16, "Reserved"),
-            metadata(raw[16:24], (15, 8), "Minimum Voltage", f"{int(raw[16:24], 2) * 0.1}V"),
+            metadata(raw[16:24], (15, 8), "Minimum Voltage", f"{int(raw[16:24], 2) * 0.1:.2f}V"),
             metadata(raw[24], 7, "Reserved"),
-            metadata(raw[25:32], (6, 0), "Maximum Current", f"{int(raw[25:32], 2) * 0.05}A"),
+            metadata(raw[25:32], (6, 0), "Maximum Current", f"{int(raw[25:32], 2) * 0.05:.2f}A"),
         ]
 
         self._field_map = {m.field(): m for m in self._value}
@@ -357,9 +357,9 @@ class EPR_AVS_PDO(metadata):
             metadata(raw[0:2], (31, 30), "Supply Type", "APDO"),
             metadata(raw[2:4], (29, 28), "APDO Type", "EPR AVS"),
             metadata(raw[4:6], (27, 26), "Peak Current", raw[4:6]),
-            metadata(raw[6:15], (25, 17), "Maximum Voltage", f"{int(raw[6:15], 2) * 0.1}V"),
+            metadata(raw[6:15], (25, 17), "Maximum Voltage", f"{int(raw[6:15], 2) * 0.1:.2f}V"),
             metadata(raw[15], 16, "Reserved"),
-            metadata(raw[16:24], (15, 8), "Minimum Voltage", f"{int(raw[16:24], 2) * 0.1}V"),
+            metadata(raw[16:24], (15, 8), "Minimum Voltage", f"{int(raw[16:24], 2) * 0.1:.2f}V"),
             metadata(raw[24:32], (7, 0), "PDP", f"{int(raw[24:32], 2)}W"),
         ]
 
@@ -382,8 +382,8 @@ class SPR_AVS_PDO(metadata):
             metadata(raw[2:4], (29, 28), "APDO Type", "SPR AVS"),
             metadata(raw[4:6], (27, 26), "Peak Current", raw[4:6]),
             metadata(raw[6:12], (25, 20), "Reserved"),
-            metadata(raw[12:22], (19, 10), "Maximum Current 15V", f"{int(raw[12:22], 2) * 0.01}A"),
-            metadata(raw[22:32], (9, 0), "Maximum Current 20V", f"{int(raw[22:32], 2) * 0.01}A"),
+            metadata(raw[12:22], (19, 10), "Maximum Current 15V", f"{int(raw[12:22], 2) * 0.01:.2f}A"),
+            metadata(raw[22:32], (9, 0), "Maximum Current 20V", f"{int(raw[22:32], 2) * 0.01:.2f}A"),
         ]
 
         self._field_map = {m.field(): m for m in self._value}
@@ -410,8 +410,8 @@ class F_VRDO(metadata):
             metadata(raw[8], 23, "Unchunked Extended Messages Supported", bool(int(raw[8]))),
             metadata(raw[9], 22, "EPR Capable", bool(int(raw[9]))),
             metadata(raw[10:12], (21, 20), "Reserved"),
-            metadata(raw[12:22], (19, 10), "Operating Current", f"{int(raw[12:22], 2) * 0.01}A"),
-            metadata(raw[22:32], (9, 0), "Maximum Operating Current", f"{int(raw[22:32], 2) * 0.01}A"),
+            metadata(raw[12:22], (19, 10), "Operating Current", f"{int(raw[12:22], 2) * 0.01:.2f}A"),
+            metadata(raw[22:32], (9, 0), "Maximum Operating Current", f"{int(raw[22:32], 2) * 0.01:.2f}A"),
         ]
 
         self._field_map = {m.field(): m for m in self._value}
@@ -441,8 +441,8 @@ class BRDO(metadata):
             metadata(raw[8], 23, "Unchunked Extended Messages Supported", bool(int(raw[8]))),
             metadata(raw[9], 22, "EPR Capable", bool(int(raw[9]))),
             metadata(raw[10:12], (21, 20), "Reserved"),
-            metadata(raw[12:22], (19, 10), "Operating Power", f"{int(raw[12:22], 2) * 0.25}W"),
-            metadata(raw[22:32], (9, 0), "Maximum Operating Power", f"{int(raw[22:32], 2) * 0.25}W"),
+            metadata(raw[12:22], (19, 10), "Operating Power", f"{int(raw[12:22], 2) * 0.25:.2f}W"),
+            metadata(raw[22:32], (9, 0), "Maximum Operating Power", f"{int(raw[22:32], 2) * 0.25:.2f}W"),
         ]
 
         self._field_map = {m.field(): m for m in self._value}
@@ -472,9 +472,9 @@ class PPS_RDO(metadata):
             metadata(raw[8], 23, "Unchunked Extended Messages Supported", bool(int(raw[8]))),
             metadata(raw[9], 22, "EPR Capable", bool(int(raw[9]))),
             metadata(raw[10], 21, "Reserved"),
-            metadata(raw[11:23], (20, 9), "Output Voltage", f"{int(raw[11:23], 2) * 0.02}V"),
+            metadata(raw[11:23], (20, 9), "Output Voltage", f"{int(raw[11:23], 2) * 0.02:.2f}V"),
             metadata(raw[23:25], (8, 7), "Reserved"),
-            metadata(raw[25:32], (6, 0), "Operating Current", f"{int(raw[25:32], 2) * 0.05}A"),
+            metadata(raw[25:32], (6, 0), "Operating Current", f"{int(raw[25:32], 2) * 0.05:.2f}A"),
         ]
 
         self._field_map = {m.field(): m for m in self._value}
@@ -504,9 +504,9 @@ class AVS_RDO(metadata):
             metadata(raw[8], 23, "Unchunked Extended Messages Supported", bool(int(raw[8]))),
             metadata(raw[9], 22, "EPR Capable", bool(int(raw[9]))),
             metadata(raw[10], 21, "Reserved"),
-            metadata(raw[11:23], (20, 9), "Output Voltage", f"{int(raw[11:23], 2) * 0.025}V"),
+            metadata(raw[11:23], (20, 9), "Output Voltage", f"{int(raw[11:23], 2) * 0.025:.2f}V"),
             metadata(raw[23:25], (8, 7), "Reserved"),
-            metadata(raw[25:32], (6, 0), "Operating Current", f"{int(raw[25:32], 2) * 0.05}A"),
+            metadata(raw[25:32], (6, 0), "Operating Current", f"{int(raw[25:32], 2) * 0.05:.2f}A"),
         ]
 
         self._field_map = {m.field(): m for m in self._value}
