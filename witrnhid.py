@@ -626,20 +626,15 @@ class Battery_Status(metadata):
         ]
         if BSDO_raw[22] == '1':
             if BSDO_raw[20:22] == "00":
-                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), 
-                                           "Battery Charging Status", "Battery is Charging"), 2)
+                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Battery is Charging"))
             elif BSDO_raw[20:22] == "01":
-                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), 
-                                           "Battery Charging Status", "Battery is Discharging"), 2)
+                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Battery is Discharging"))
             elif BSDO_raw[20:22] == "10":
-                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), 
-                                           "Battery Charging Status", "Battery is Idle"), 2)
+                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Battery is Idle"))
             elif BSDO_raw[20:22] == "11":
-                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), 
-                                           "Battery Charging Status", "Reserved"), 2)
+                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Reserved"))
         elif BSDO_raw[22] == '0':
-            Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), 
-                                       "Battery Charging Status", "Reserved"), 2)
+            Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Reserved"))
         Batter_Info.append(metadata(BSDO_raw[16:20], (7, 4), "Reserved"))
         BSDO.append(metadata(BSDO_raw[16:24], (15, 8), "Battery Info", Batter_Info))
         BSDO.append(metadata(BSDO_raw[24:32], (7, 0), "Reserved"))
@@ -650,6 +645,7 @@ class Alert(metadata):
     def __init__(self, data, bit_loc, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        ADO_raw = lst2str(data[0:4])
 
 # TODO
 class Get_Country_Info(metadata):
