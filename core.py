@@ -138,6 +138,19 @@ class metadata:
     
     def __repr__(self):
         return f"{self._field}: {self._value}"
+    
+    def __getitem__(self, field):
+        if isinstance(self._value, list):
+            if not hasattr(self, 'field_map'):
+                self._field_map = {m.field(): m for m in self._value}
+                if "Reserved" in self._field_map:
+                    del self._field_map["Reserved"]
+            if isinstance(field, str):
+                return self._field_map.get(field, None)
+            else:
+                return self._value[field]
+        else:
+            return "Not a list"
 
 
 class general_msg(metadata):
@@ -167,16 +180,6 @@ class general_msg(metadata):
             metadata(lst2str([data[55]]), (440, 447), "CC1", f"{data[55] / 10}V"),
             metadata(lst2str([data[56]]), (448, 455), "CC2", f"{data[56] / 10}V"),
         ]
-
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
-
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
 
 
 class msg_header(metadata):
@@ -215,16 +218,6 @@ class msg_header(metadata):
                 self._value.append(metadata(raw[11:16], (4, 0), "Message Type",
                                            DMT.get(raw[11:16], "Reserved")))
 
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
-
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
-
 
 def is_pdo(msg: metadata) -> bool:
     type = msg["Message Header"]["Message Type"].value()
@@ -241,16 +234,6 @@ class ex_msg_header(metadata):
             metadata(raw[6], 9, "Reserved"),
             metadata(raw[7:16], (8, 0), "Data Size", int(raw[7:16], 2)),
         ]
-
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
-
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
 
 
 class FPDO(metadata):
@@ -271,15 +254,39 @@ class FPDO(metadata):
             metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) / 100}A")
         ]
 
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
 
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
+class FPDO_S(metadata):
+    def __init__(self, raw, bit_loc, field):
+        super().__init__(raw, bit_loc, field)
+        self._value = [
+            metadata(raw[0:2], (31, 30), "Supply Type", "FPDO Sink"),
+            metadata(raw[2], 29, "Dual-Role Power", bool(int(raw[2]))),
+            metadata(raw[3], 28, "Higher Capability", bool(int(raw[3]))),
+            metadata(raw[4], 27, "Unconstrained Power", bool(int(raw[4]))),
+            metadata(raw[5], 26, "USB Communications Capable", bool(int(raw[5]))),
+            metadata(raw[6], 25, "Dual-Role Data", bool(int(raw[6]))),
+        ]
+
+        if raw[6:8] == "00":
+            self._value.append(metadata(raw[7:9], (24, 23),
+                                        "Fast Role Swap required USB Type-C Current",
+                                        "Not Supported"))
+        elif raw[6:8] == "01":
+            self._value.append(metadata(raw[7:9], (24, 23),
+                                        "Fast Role Swap required USB Type-C Current",
+                                        "Default USB Port"))
+        elif raw[6:8] == "10":
+            self._value.append(metadata(raw[7:9], (24, 23),
+                                        "Fast Role Swap required USB Type-C Current",
+                                        "1.5A@5V"))
+        elif raw[6:8] == "11":
+            self._value.append(metadata(raw[7:9], (24, 23),
+                                        "Fast Role Swap required USB Type-C Current",
+                                        "3A@5V"))
+        
+        self._value.append(metadata(raw[9:12], (22, 20), "Reserved"))
+        self._value.append(metadata(raw[12:22], (19, 10), "Voltage", f"{int(raw[12:22], 2) / 20}V"))
+        self._value.append(metadata(raw[22:32], (9, 0), "Operational Current", f"{int(raw[22:32], 2) / 100}A"))
 
 
 class BPDO(metadata):
@@ -292,36 +299,38 @@ class BPDO(metadata):
             metadata(raw[22:32], (9, 0), "Maximum Allowable Power", f"{int(raw[22:32], 2) / 4}W")
         ]
 
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
 
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
+class BPDO_S(metadata):
+    def __init__(self, raw, bit_loc, field):
+        super().__init__(raw, bit_loc, field)
+        self._value = [
+            metadata(raw[0:2], (31, 30), "Supply Type", "BPDO Sink"),
+            metadata(raw[2:12], (29, 20), "Maximum Voltage", f"{int(raw[2:12], 2) / 20}V"),
+            metadata(raw[12:22], (19, 10), "Minimum Voltage", f"{int(raw[12:22], 2) / 20}V"),
+            metadata(raw[22:32], (9, 0), "Operational Power", f"{int(raw[22:32], 2) / 4}W")
+        ]
 
 
 class VPDO(metadata):
     def __init__(self, raw, bit_loc, field):
         super().__init__(raw, bit_loc, field)
         self._value = [
-            metadata(raw[0:2], (31, 30), "Supply Type", "BPDO"),
+            metadata(raw[0:2], (31, 30), "Supply Type", "VPDO"),
             metadata(raw[2:12], (29, 20), "Maximum Voltage", f"{int(raw[2:12], 2) / 20}V"),
             metadata(raw[12:22], (19, 10), "Minimum Voltage", f"{int(raw[12:22], 2) / 20}V"),
             metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) / 100}A")
         ]
 
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
 
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
+class VPDO_S(metadata):
+    def __init__(self, raw, bit_loc, field):
+        super().__init__(raw, bit_loc, field)
+        self._value = [
+            metadata(raw[0:2], (31, 30), "Supply Type", "VPDO Sink"),
+            metadata(raw[2:12], (29, 20), "Maximum Voltage", f"{int(raw[2:12], 2) / 20}V"),
+            metadata(raw[12:22], (19, 10), "Minimum Voltage", f"{int(raw[12:22], 2) / 20}V"),
+            metadata(raw[22:32], (9, 0), "Operational Current", f"{int(raw[22:32], 2) / 100}A")
+        ]
 
 
 class PPS_PDO(metadata):
@@ -339,15 +348,20 @@ class PPS_PDO(metadata):
             metadata(raw[25:32], (6, 0), "Maximum Current", f"{int(raw[25:32], 2) / 20}A"),
         ]
 
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
 
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
+class PPS_PDO_S(metadata):
+    def __init__(self, raw, bit_loc, field):
+        super().__init__(raw, bit_loc, field)
+        self._value = [
+            metadata(raw[0:2], (31, 30), "Supply Type", "APDO Sink"),
+            metadata(raw[2:4], (29, 28), "APDO Type", "SPR PPS"),
+            metadata(raw[4:7], (27, 25), "Reserved"),
+            metadata(raw[7:15], (24, 17), "Maximum Voltage", f"{int(raw[7:15], 2) / 10}V"),
+            metadata(raw[15], 16, "Reserved"),
+            metadata(raw[16:24], (15, 8), "Minimum Voltage", f"{int(raw[16:24], 2) / 10}V"),
+            metadata(raw[24], 7, "Reserved"),
+            metadata(raw[25:32], (6, 0), "Maximum Current", f"{int(raw[25:32], 2) / 20}A"),
+        ]
 
 
 class EPR_AVS_PDO(metadata):
@@ -363,15 +377,19 @@ class EPR_AVS_PDO(metadata):
             metadata(raw[24:32], (7, 0), "PDP", f"{int(raw[24:32], 2)}W"),
         ]
 
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
 
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
+class EPR_AVS_PDO_S(metadata):
+    def __init__(self, raw, bit_loc, field):
+        super().__init__(raw, bit_loc, field)
+        self._value = [
+            metadata(raw[0:2], (31, 30), "Supply Type", "APDO Sink"),
+            metadata(raw[2:4], (29, 28), "APDO Type", "EPR AVS"),
+            metadata(raw[4:6], (27, 26), "Reserved"),
+            metadata(raw[6:15], (25, 17), "Maximum Voltage", f"{int(raw[6:15], 2) / 10}V"),
+            metadata(raw[15], 16, "Reserved"),
+            metadata(raw[16:24], (15, 8), "Minimum Voltage", f"{int(raw[16:24], 2) / 10}V"),
+            metadata(raw[24:32], (7, 0), "PDP", f"{int(raw[24:32], 2)}W"),
+        ]
 
 
 class SPR_AVS_PDO(metadata):
@@ -386,15 +404,17 @@ class SPR_AVS_PDO(metadata):
             metadata(raw[22:32], (9, 0), "Maximum Current 20V", f"{int(raw[22:32], 2) / 100}A"),
         ]
 
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
 
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
+class SPR_AVS_PDO_S(metadata):
+    def __init__(self, raw, bit_loc, field):
+        super().__init__(raw, bit_loc, field)
+        self._value = [
+            metadata(raw[0:2], (31, 30), "Supply Type", "APDO Sink"),
+            metadata(raw[2:4], (29, 28), "APDO Type", "SPR AVS"),
+            metadata(raw[4:12], (27, 20), "Reserved"),
+            metadata(raw[12:22], (19, 10), "Maximum Current 15V", f"{int(raw[12:22], 2) / 100}A"),
+            metadata(raw[22:32], (9, 0), "Maximum Current 20V", f"{int(raw[22:32], 2) / 100}A"),
+        ]
 
 
 class F_VRDO(metadata):
@@ -414,18 +434,8 @@ class F_VRDO(metadata):
             metadata(raw[22:32], (9, 0), "Maximum Operating Current", f"{int(raw[22:32], 2) / 100}A"),
         ]
 
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
-
     def pdo(self) -> metadata:
         return self._pdo
-
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
 
 
 class BRDO(metadata):
@@ -444,19 +454,9 @@ class BRDO(metadata):
             metadata(raw[12:22], (19, 10), "Operating Power", f"{int(raw[12:22], 2) / 4}W"),
             metadata(raw[22:32], (9, 0), "Maximum Operating Power", f"{int(raw[22:32], 2) / 4}W"),
         ]
-
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
     
     def pdo(self) -> metadata:
         return self._pdo
-
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
 
 
 class PPS_RDO(metadata):
@@ -476,19 +476,9 @@ class PPS_RDO(metadata):
             metadata(raw[23:25], (8, 7), "Reserved"),
             metadata(raw[25:32], (6, 0), "Operating Current", f"{int(raw[25:32], 2) / 20}A"),
         ]
-
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
     
     def pdo(self) -> metadata:
         return self._pdo
-
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
 
 
 class AVS_RDO(metadata):
@@ -508,19 +498,9 @@ class AVS_RDO(metadata):
             metadata(raw[23:25], (8, 7), "Reserved"),
             metadata(raw[25:32], (6, 0), "Operating Current", f"{int(raw[25:32], 2) / 20}A"),
         ]
-
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
     
     def pdo(self) -> metadata:
         return self._pdo
-
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
 
 
 def pdo_type(raw: str) -> type:
@@ -537,6 +517,24 @@ def pdo_type(raw: str) -> type:
             return EPR_AVS_PDO
         elif raw[2:4] == "10":
             return SPR_AVS_PDO
+        elif raw[2:4] == "11":
+            return metadata
+
+
+def sink_pdo_type(raw: str) -> type:
+    if raw[0:2] == "00":
+        return FPDO_S
+    elif raw[0:2] == "01":
+        return BPDO_S
+    elif raw[0:2] == "10":
+        return VPDO_S
+    elif raw[0:2] == "11":
+        if raw[2:4] == "00":
+            return PPS_PDO_S
+        elif raw[2:4] == "01":
+            return EPR_AVS_PDO_S
+        elif raw[2:4] == "10":
+            return SPR_AVS_PDO_S
         elif raw[2:4] == "11":
             return metadata
 
@@ -565,17 +563,7 @@ class Source_Capabilities(metadata):
         self._value = []
         for i in range(num_objs):
             sub_raw = lst2str(data[i*4:(i+1)*4])
-            self._value.append(pdo_type(sub_raw)(sub_raw, (i * 32, (i + 1) * 32 - 1), f"PDO {i+1}"))
-
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
-
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
+            self._value.append(pdo_type(sub_raw)(sub_raw, (i*32, (i+1)*32-1), f"PDO {i+1}"))
 
 
 class Request(metadata):
@@ -588,33 +576,74 @@ class Request(metadata):
         pdo = pdo_list[int(sub_raw[0:4], 2) - 1]
         self._value.append(rdo_type(pdo)(sub_raw, (0, 31), "RDO", pdo=pdo))
 
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
 
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
-
-# TODO
 class BIST(metadata):
     def __init__(self, data, bit_loc, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        num_objs = kwargs["header"][1].value()
+        sub_raw = lst2str(data[0:4])
+        BIST_Data_Object = []
+        if sub_raw[0:4] == "0101":
+            BIST_Data_Object.append(metadata(sub_raw[0:4], (31, 28), "BIST Mode", "BIST Carrier Mode"))
+        elif sub_raw[0:4] == "1000":
+            BIST_Data_Object.append(metadata(sub_raw[0:4], (31, 28), "BIST Mode", "BIST Test Data"))
+        elif sub_raw[0:4] == "1001":
+            BIST_Data_Object.append(metadata(sub_raw[0:4], (31, 28), "BIST Mode", "BIST Shared Test Mode Entry"))
+        elif sub_raw[0:4] == "1010":
+            BIST_Data_Object.append(metadata(sub_raw[0:4], (31, 28), "BIST Mode", "BIST Shared Test Mode Exit"))
+        else:
+            BIST_Data_Object.append(metadata(sub_raw[0:4], (31, 28), "BIST Mode", "Reserved"))
+        BIST_Data_Object.append(metadata(sub_raw[4:32], (27, 0), "Reserved"))
+        self._value = [(metadata(sub_raw, (0, 31), "BIST Data Object", BIST_Data_Object))]
+        if num_objs > 1:
+            self._value.append(metadata(lst2str(data[4:num_objs*4]), (32, num_objs*32-1), "Test Data",
+                                        f'0x{bytes(data[4:num_objs*4]).hex().upper()}'))
 
-# TODO
+
 class Sink_Capabilities(metadata):
     def __init__(self, data, bit_loc, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        num_objs = kwargs["header"][1].value()
+        self._value = []
+        for i in range(num_objs):
+            sub_raw = lst2str(data[i*4:(i+1)*4])
+            self._value.append(sink_pdo_type(sub_raw)(sub_raw, (i*32, (i+1)*32-1), f"PDO {i+1}"))
 
-# TODO
+
 class Battery_Status(metadata):
     def __init__(self, data, bit_loc, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        BSDO_raw = lst2str(data[0:4])
+        BSDO = [
+            metadata(BSDO_raw[0:16], (31, 16), "Battery Present Capacity", f"{int(BSDO_raw[0:16], 2) / 10}Wh"),
+        ]
+        Batter_Info = [
+            metadata(BSDO_raw[23], 0, "Invalid Battery Reference", bool(int(BSDO_raw[23]))),
+            metadata(BSDO_raw[22], 1, "Battery Present", bool(int(BSDO_raw[22]))),
+        ]
+        if BSDO_raw[22] == '1':
+            if BSDO_raw[20:22] == "00":
+                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), 
+                                           "Battery Charging Status", "Battery is Charging"), 2)
+            elif BSDO_raw[20:22] == "01":
+                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), 
+                                           "Battery Charging Status", "Battery is Discharging"), 2)
+            elif BSDO_raw[20:22] == "10":
+                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), 
+                                           "Battery Charging Status", "Battery is Idle"), 2)
+            elif BSDO_raw[20:22] == "11":
+                Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), 
+                                           "Battery Charging Status", "Reserved"), 2)
+        elif BSDO_raw[22] == '0':
+            Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), 
+                                       "Battery Charging Status", "Reserved"), 2)
+        Batter_Info.append(metadata(BSDO_raw[16:20], (7, 4), "Reserved"))
+        BSDO.append(metadata(BSDO_raw[16:24], (15, 8), "Battery Info", Batter_Info))
+        BSDO.append(metadata(BSDO_raw[24:32], (7, 0), "Reserved"))
+        self._value = [metadata(BSDO_raw, (0, 31), "BSDO", BSDO)]
 
 # TODO
 class Alert(metadata):
@@ -645,16 +674,6 @@ class EPR_Request(metadata):
         copy_of_pdo = pdo_type(copy_of_pdo_raw)(copy_of_pdo_raw, (32, 63), "Copy of PDO")
         self._value.append(rdo_type(copy_of_pdo)(rdo_raw, (0, 31), "RDO", pdo=copy_of_pdo))
         self._value.append(copy_of_pdo)
-
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
-
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
 
 # TODO
 class EPR_Mode(metadata):
@@ -820,9 +839,9 @@ class EPR_Source_Capabilities(metadata):
         for i in range(int(self._full_num_objs)):
             sub_raw = lst2str(self._full_data[i*4:(i+1)*4])
             if sub_raw == "0" * 32:
-                self._full_value.append(metadata(sub_raw, (i * 32, (i + 1) * 32 - 1), f"PDO {i+1}", "Empty PDO"))
+                self._full_value.append(metadata(sub_raw, (i*32, (i+1)*32-1), f"PDO {i+1}", "Empty PDO"))
             else:
-                self._full_value.append(pdo_type(sub_raw)(sub_raw, (i * 32, (i + 1) * 32 - 1), f"PDO {i+1}"))
+                self._full_value.append(pdo_type(sub_raw)(sub_raw, (i*32, (i+1)*32-1), f"PDO {i+1}"))
 
         self._field_map = {m.field(): m for m in self._full_value}
         if "Reserved" in self._field_map:
@@ -891,7 +910,7 @@ class pd_msg(metadata):
         if self._value[2]["Extended"].value():
             self._value.append(ex_msg_header(lst2str(data[5:7]), (40, 55)))
             self._value.append(globals()[self._value[2]["Message Type"].value()](data[7:end_of_msg],
-                                                                             (56, (end_of_msg) * 8 - 1),
+                                                                             (56, (end_of_msg)*8-1),
                                                                              sop=SOP[data[2]],
                                                                              header=self._value[2],
                                                                              ex_header=self._value[3],
@@ -900,20 +919,11 @@ class pd_msg(metadata):
         else:
             if self._value[2]["Message Type"].value() in globals():
                 self._value.append(globals()[self._value[2]["Message Type"].value()](data[5:end_of_msg],
-                                                                                 (40, (end_of_msg) * 8 - 1),
+                                                                                 (40, (end_of_msg)*8-1),
                                                                                  sop=SOP[data[2]],
                                                                                  header=self._value[2],
                                                                                  last_pdo=last_pdo))
 
-        self._field_map = {m.field(): m for m in self._value}
-        if "Reserved" in self._field_map:
-            del self._field_map["Reserved"]
-
-    def __getitem__(self, field) -> metadata:
-        if isinstance(field, str):
-            return self._field_map.get(field, None)
-        else:
-            return self._value[field]
 
 class WITRN_HID:
     def __init__(self, vid=K2_TARGET_VID, pid=K2_TARGET_PID):
@@ -926,7 +936,7 @@ class WITRN_HID:
         self.dev.open(vid, pid)
 
     def read_data(self) -> list:
-        self.timestamp = time.strftime("%H:%M:%S", time.localtime()) + f".{(int(time.time() * 1000) % 1000):03d}"
+        self.timestamp = time.strftime("%H:%M:%S", time.localtime()) + f".{(int(time.time()*1000)%1000):03d}"
         self.data = self.dev.read(64)
         return self.data
 
