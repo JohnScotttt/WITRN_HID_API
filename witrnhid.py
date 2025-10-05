@@ -584,6 +584,7 @@ class BIST(metadata):
         num_objs = kwargs["header"][1].value()
         sub_raw = lst2str(data[0:4])
         BIST_Data_Object = []
+
         if sub_raw[0:4] == "0101":
             BIST_Data_Object.append(metadata(sub_raw[0:4], (31, 28), "BIST Mode", "BIST Carrier Mode"))
         elif sub_raw[0:4] == "1000":
@@ -594,8 +595,11 @@ class BIST(metadata):
             BIST_Data_Object.append(metadata(sub_raw[0:4], (31, 28), "BIST Mode", "BIST Shared Test Mode Exit"))
         else:
             BIST_Data_Object.append(metadata(sub_raw[0:4], (31, 28), "BIST Mode", "Reserved"))
+        
         BIST_Data_Object.append(metadata(sub_raw[4:32], (27, 0), "Reserved"))
+
         self._value = [(metadata(sub_raw, (0, 31), "BIST Data Object", BIST_Data_Object))]
+
         if num_objs > 1:
             self._value.append(metadata(lst2str(data[4:num_objs*4]), (32, num_objs*32-1), "Test Data",
                                         f'0x{bytes(data[4:num_objs*4]).hex().upper()}'))
@@ -620,10 +624,12 @@ class Battery_Status(metadata):
         BSDO = [
             metadata(BSDO_raw[0:16], (31, 16), "Battery Present Capacity", f"{int(BSDO_raw[0:16], 2) / 10}Wh"),
         ]
+
         Batter_Info = [
             metadata(BSDO_raw[23], 0, "Invalid Battery Reference", bool(int(BSDO_raw[23]))),
             metadata(BSDO_raw[22], 1, "Battery Present", bool(int(BSDO_raw[22]))),
         ]
+
         if BSDO_raw[22] == '1':
             if BSDO_raw[20:22] == "00":
                 Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Battery is Charging"))
@@ -635,29 +641,147 @@ class Battery_Status(metadata):
                 Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Reserved"))
         elif BSDO_raw[22] == '0':
             Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Reserved"))
+        
         Batter_Info.append(metadata(BSDO_raw[16:20], (7, 4), "Reserved"))
+
         BSDO.append(metadata(BSDO_raw[16:24], (15, 8), "Battery Info", Batter_Info))
         BSDO.append(metadata(BSDO_raw[24:32], (7, 0), "Reserved"))
+
         self._value = [metadata(BSDO_raw, (0, 31), "BSDO", BSDO)]
 
-# TODO
+
 class Alert(metadata):
     def __init__(self, data, bit_loc, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        ppr = kwargs["header"][3].value()
         ADO_raw = lst2str(data[0:4])
+        Type_of_Alert = [
+            metadata(ADO_raw[7], 0, "Reserved"),
+            metadata(ADO_raw[6], 1, "Battery Status Changed Event", bool(int(ADO_raw[25]))),
+            metadata(ADO_raw[5], 2, "OCP Event", bool(int(ADO_raw[26]))),
+        ]
 
-# TODO
+        if ppr == "Source":
+            Type_of_Alert.append(metadata(ADO_raw[4], 3, "OTP Event", bool(int(ADO_raw[27]))))
+        elif ppr == "Sink":
+            Type_of_Alert.append(metadata(ADO_raw[4], 3, "Reserved"))
+        
+        Type_of_Alert.append(metadata(ADO_raw[3], 4, "Operating Condition Change", bool(int(ADO_raw[28]))))
+        Type_of_Alert.append(metadata(ADO_raw[2], 5, "Source Input Change Event", bool(int(ADO_raw[29]))))
+        Type_of_Alert.append(metadata(ADO_raw[1], 6, "OVP Event", bool(int(ADO_raw[30]))))
+        Type_of_Alert.append(metadata(ADO_raw[0], 7, "Extended Alert Event", bool(int(ADO_raw[31]))))
+
+        ADO = [
+            metadata(ADO_raw[0:8], (31, 24), "Type of Alert", Type_of_Alert),
+            metadata(ADO_raw[8:12], (23, 20), "Fixed Batteries", ADO_raw[8:12]),
+            metadata(ADO_raw[12:16], (19, 16), "Hot Swappable Batteries", ADO_raw[12:16]),
+            metadata(ADO_raw[16:28], (15, 4), "Reserved")
+        ]
+
+        if ADO_raw[0] == '1':
+            if int(ADO_raw[28:32], 2) == 1:
+                ADO.append(metadata(ADO_raw[28:32], (3, 0), "Extended Alert Event Type", "Power state change"))
+            elif int(ADO_raw[28:32], 2) == 2:
+                ADO.append(metadata(ADO_raw[28:32], (3, 0), "Extended Alert Event Type", "Power button press"))
+            elif int(ADO_raw[28:32], 2) == 3:
+                ADO.append(metadata(ADO_raw[28:32], (3, 0), "Extended Alert Event Type", "Power button release"))
+            elif int(ADO_raw[28:32], 2) == 4:
+                ADO.append(metadata(ADO_raw[28:32], (3, 0), "Extended Alert Event Type", "Controller initiated wake"))
+            else:
+                ADO.append(metadata(ADO_raw[28:32], (3, 0), "Extended Alert Event Type", "Reserved"))
+        else:
+            ADO.append(metadata(ADO_raw[28:32], (3, 0), "Extended Alert Event Type", "Reserved"))
+        
+        self._value = [metadata(ADO_raw, (0, 31), "ADO", ADO)]
+
+
 class Get_Country_Info(metadata):
     def __init__(self, data, bit_loc, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        CCDO_raw = lst2str(data[0:4])
+        CCDO = [
+            metadata(CCDO_raw[0:8], (31, 24), "First character of the Alpha-2 Country Code",
+                     f"0x{int(CCDO_raw[0:8], 2):02X}"),
+            metadata(CCDO_raw[8:16], (23, 16), "Second character of the Alpha-2 Country Code",
+                     f"0x{int(CCDO_raw[8:16], 2):02X}"),
+            metadata(CCDO_raw[16:32], (15, 0), "Reserved")
+        ]
 
-# TODO
+        self._value = [metadata(CCDO_raw, (0, 31), "CCDO", CCDO)]
+
+
 class Enter_USB(metadata):
     def __init__(self, data, bit_loc, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        EUDO_raw = lst2str(data[0:4])
+        EUDO = [
+            metadata(EUDO_raw[0], 31, "Reserved")
+        ]
+
+        if EUDO_raw[1:4] == "000":
+            EUDO.append(metadata(EUDO_raw[1:4], (30, 28), "USB Mode", "USB2.0"))
+        elif EUDO_raw[1:4] == "001":
+            EUDO.append(metadata(EUDO_raw[1:4], (30, 28), "USB Mode", "USB3.2"))
+        elif EUDO_raw[1:4] == "010":
+            EUDO.append(metadata(EUDO_raw[1:4], (30, 28), "USB Mode", "USB4"))
+        else:
+            EUDO.append(metadata(EUDO_raw[1:4], (30, 28), "USB Mode", "Reserved"))
+
+        EUDO.append(metadata(EUDO_raw[4], 27, "Reserved"))
+
+        if EUDO_raw[5] == '0':
+            EUDO.append(metadata(EUDO_raw[5], 26, "USB4 DRD", "Not Capable"))
+        elif EUDO_raw[5] == '1':
+            EUDO.append(metadata(EUDO_raw[5], 26, "USB4 DRD", "Capable"))
+        
+        if EUDO_raw[6] == '0':
+            EUDO.append(metadata(EUDO_raw[6], 25, "USB3 DRD", "Not Capable"))
+        elif EUDO_raw[6] == '1':
+            EUDO.append(metadata(EUDO_raw[6], 25, "USB3 DRD", "Capable"))
+        
+        EUDO.append(metadata(EUDO_raw[7], 24, "Reserved"))
+
+        if EUDO_raw[8:11] == "000":
+            EUDO.append(metadata(EUDO_raw[8:11], (23, 21), "Cable Speed", "USB2.0 Only"))
+        elif EUDO_raw[8:11] == "001":
+            EUDO.append(metadata(EUDO_raw[8:11], (23, 21), "Cable Speed", "USB3.2 Gen1"))
+        elif EUDO_raw[8:11] == "010":
+            EUDO.append(metadata(EUDO_raw[8:11], (23, 21), "Cable Speed", "USB3.2 Gen2 and USB4 Gen2"))
+        elif EUDO_raw[8:11] == "011":
+            EUDO.append(metadata(EUDO_raw[8:11], (23, 21), "Cable Speed", "USB4 Gen3"))
+        elif EUDO_raw[8:11] == "100":
+            EUDO.append(metadata(EUDO_raw[8:11], (23, 21), "Cable Speed", "USB4 Gen4"))
+        else:
+            EUDO.append(metadata(EUDO_raw[8:11], (23, 21), "Cable Speed", "Reserved"))
+
+        if EUDO_raw[11:13] == "00":
+            EUDO.append(metadata(EUDO_raw[11:13], (20, 19), "Cable Type", "Passive"))
+        elif EUDO_raw[11:13] == "01":
+            EUDO.append(metadata(EUDO_raw[11:13], (20, 19), "Cable Type", "Active Re-timer"))
+        elif EUDO_raw[11:13] == "10":
+            EUDO.append(metadata(EUDO_raw[11:13], (20, 19), "Cable Type", "Active Re-driver"))
+        elif EUDO_raw[11:13] == "11":
+            EUDO.append(metadata(EUDO_raw[11:13], (20, 19), "Cable Type", "Optical Isolated"))
+        
+        if EUDO_raw[13:15] == "00":
+            EUDO.append(metadata(EUDO_raw[13:15], (18, 17), "Cable Current", "VBUS is not supported"))
+        elif EUDO_raw[13:15] == "01":
+            EUDO.append(metadata(EUDO_raw[13:15], (18, 17), "Cable Current", "Reserved"))
+        elif EUDO_raw[13:15] == "10":
+            EUDO.append(metadata(EUDO_raw[13:15], (18, 17), "Cable Current", "3A"))
+        elif EUDO_raw[13:15] == "11":
+            EUDO.append(metadata(EUDO_raw[13:15], (18, 17), "Cable Current", "5A"))
+
+        EUDO.append(metadata(EUDO_raw[15], 16, "PCIe Support", bool(int(EUDO_raw[15]))))
+        EUDO.append(metadata(EUDO_raw[16], 15, "DP Support", bool(int(EUDO_raw[16]))))
+        EUDO.append(metadata(EUDO_raw[17], 14, "TBT Support", bool(int(EUDO_raw[17]))))
+        EUDO.append(metadata(EUDO_raw[18], 13, "Host Present", bool(int(EUDO_raw[18]))))
+        EUDO.append(metadata(EUDO_raw[19:32], (12, 0), "Reserved"))
+
+        self._value = [metadata(EUDO_raw, (0, 31), "EUDO", EUDO)]
 
 
 class EPR_Request(metadata):
@@ -671,23 +795,89 @@ class EPR_Request(metadata):
         self._value.append(rdo_type(copy_of_pdo)(rdo_raw, (0, 31), "RDO", pdo=copy_of_pdo))
         self._value.append(copy_of_pdo)
 
-# TODO
+
 class EPR_Mode(metadata):
     def __init__(self, data, bit_loc, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        EPRMDO_raw = lst2str(data[0:4])
+        EPRMDO = []
 
-# TODO
+        if EPRMDO_raw[0:8] == "00000000":
+            EPRMDO.append(metadata(EPRMDO_raw[0:8], (31, 24), "Action", "Reserved"))
+        elif EPRMDO_raw[0:8] == "00000001":
+            EPRMDO.append(metadata(EPRMDO_raw[0:8], (31, 24), "Action", "Enter"))
+        elif EPRMDO_raw[0:8] == "00000010":
+            EPRMDO.append(metadata(EPRMDO_raw[0:8], (31, 24), "Action", "Enter Acknowledged"))
+        elif EPRMDO_raw[0:8] == "00000011":
+            EPRMDO.append(metadata(EPRMDO_raw[0:8], (31, 24), "Action", "Enter Succeeded"))
+        elif EPRMDO_raw[0:8] == "00000100":
+            EPRMDO.append(metadata(EPRMDO_raw[0:8], (31, 24), "Action", "Enter Failed"))
+        elif EPRMDO_raw[0:8] == "00000101":
+            EPRMDO.append(metadata(EPRMDO_raw[0:8], (31, 24), "Action", "Exit"))
+        else:
+            EPRMDO.append(metadata(EPRMDO_raw[0:8], (31, 24), "Action", "Reserved"))
+
+        action_name = EPRMDO[0].value()
+
+        if action_name == "Enter":
+            EPRMDO.append(metadata(EPRMDO_raw[8:16], (23, 16), "Data", f"{int(EPRMDO_raw[8:16], 2)}W"))
+        elif action_name in ["Enter Acknowledged", "Enter Succeeded", "Exit"]:
+            EPRMDO.append(metadata(EPRMDO_raw[8:16], (23, 16), "Data", "Reserved"))
+        elif action_name == "Enter Failed":
+            if EPRMDO_raw[8:16] == "00000000":
+                EPRMDO.append(metadata(EPRMDO_raw[8:16], (23, 16), "Data", "Unknown cause"))
+            elif EPRMDO_raw[8:16] == "00000001":
+                EPRMDO.append(metadata(EPRMDO_raw[8:16], (23, 16), "Data", "Cable not EPR Capable"))
+            elif EPRMDO_raw[8:16] == "00000010":
+                EPRMDO.append(metadata(EPRMDO_raw[8:16], (23, 16), "Data", "Source failed to become VCONN Source"))
+            elif EPRMDO_raw[8:16] == "00000011":
+                EPRMDO.append(metadata(EPRMDO_raw[8:16], (23, 16), "Data", "EPR Capable bit not set in RDO"))
+            elif EPRMDO_raw[8:16] == "00000100":
+                EPRMDO.append(metadata(EPRMDO_raw[8:16], (23, 16), "Data", "Source unable to enter EPR Mode"))
+            elif EPRMDO_raw[8:16] == "00000101":
+                EPRMDO.append(metadata(EPRMDO_raw[8:16], (23, 16), "Data", "EPR Capable bit not set in PDO"))
+            else:
+                EPRMDO.append(metadata(EPRMDO_raw[8:16], (23, 16), "Data", "Reserved"))
+
+        EPRMDO.append(metadata(EPRMDO_raw[16:32], (15, 0), "Reserved"))
+
+        self._value = [metadata(EPRMDO_raw, (0, 31), "EPRMDO", EPRMDO)]
+
+
 class Source_Info(metadata):
     def __init__(self, data, bit_loc, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        SIDO_raw = lst2str(data[0:4])
+        SIDO = []
 
-# TODO
+        if SIDO_raw[0] == '0':
+            SIDO.append(SIDO_raw[0], 31, "Port Type", "Managed Capability Port")
+        elif SIDO_raw[0] == '1':
+            SIDO.append(SIDO_raw[0], 31, "Port Type", "Guaranteed Capability Port")
+        
+        SIDO.append(SIDO_raw[1:8], (30, 24), "Reserved")
+        SIDO.append(SIDO_raw[8:16], (23, 16), "Port Maximum PDP", f"{int(SIDO_raw[8:16], 2)}W")
+        SIDO.append(SIDO_raw[16:24], (15, 8), "Port Present PDP", f"{int(SIDO_raw[16:24], 2)}W")
+        SIDO.append(SIDO_raw[24:32], (7, 0), "Port Reported PDP", f"{int(SIDO_raw[24:32], 2)}W")
+
+        self._value = [metadata(SIDO_raw, (0, 31), "SIDO", SIDO)]
+
+
 class Revision(metadata):
     def __init__(self, data, bit_loc, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        RMDO_raw = lst2str(data[0:4])
+        RMDO = [
+            metadata(RMDO_raw[0:4], (31, 28), "Revision.major", int(RMDO_raw[0:4], 2)),
+            metadata(RMDO_raw[4:8], (27, 24), "Revision.minor", int(RMDO_raw[4:8], 2)),
+            metadata(RMDO_raw[8:12], (23, 20), "Version.major", int(RMDO_raw[8:12], 2)),
+            metadata(RMDO_raw[12:16], (19, 16), "Version.minor", int(RMDO_raw[12:16], 2)),
+            metadata(RMDO_raw[16:32], (15, 0), "Reserved")
+        ]
+        self._value = [metadata(RMDO_raw, (0, 31), "RMDO", RMDO)]
 
 # TODO
 class Vendor_Defined(metadata):
@@ -818,19 +1008,24 @@ class EPR_Source_Capabilities(metadata):
         if ex_header["Request Chunk"].value():
             self._full_value = None
             return
+        
         last_ext = kwargs["last_ext"]
         data_size = ex_header["Data Size"].value()
+
         if need_ext(ex_header):
             self._full_data = last_ext["Data Block"]._get_full_data() + data
             self._full_num_objs = last_ext["Data Block"]._get_full_num_objs() + num_objs - 0.5
         else:
             self._full_data = data
             self._full_num_objs = num_objs - 0.5
+        
         self._full_raw = lst2str(self._full_data, '>')
         self._value = "Incomplete Data"
+
         if len(self._full_data) < data_size:
             self._full_value = "Incomplete Data"
             return
+        
         self._full_value = []
         for i in range(int(self._full_num_objs)):
             sub_raw = lst2str(self._full_data[i*4:(i+1)*4])
@@ -895,30 +1090,33 @@ class pd_msg(metadata):
         end_of_msg = data[1] + 2
         self._raw = lst2str(data[0:end_of_msg], '>')
         self._bit_loc = (0, (end_of_msg) * 8 - 1)
-        self._value = [
-            metadata(lst2str([data[1]]), (8, 15), "Length", data[1]),
-            metadata(lst2str([data[2]]), (16, 23), "SOP*", SOP[data[2]]),
-            msg_header(lst2str(data[3:5]), (24, 39), SOP[data[2]])
-        ]
+        try:
+            self._value = [
+                metadata(lst2str([data[1]]), (8, 15), "Length", data[1]),
+                metadata(lst2str([data[2]]), (16, 23), "SOP*", SOP[data[2]]),
+                msg_header(lst2str(data[3:5]), (24, 39), SOP[data[2]])
+            ]
 
-        end_of_msg = 5 + self._value[2][1].value() * 4
+            end_of_msg = 5 + self._value[2][1].value() * 4
 
-        if self._value[2]["Extended"].value():
-            self._value.append(ex_msg_header(lst2str(data[5:7]), (40, 55)))
-            self._value.append(globals()[self._value[2]["Message Type"].value()](data[7:end_of_msg],
-                                                                             (56, (end_of_msg)*8-1),
-                                                                             sop=SOP[data[2]],
-                                                                             header=self._value[2],
-                                                                             ex_header=self._value[3],
-                                                                             last_pdo=last_pdo,
-                                                                             last_ext=last_ext))
-        else:
-            if self._value[2]["Message Type"].value() in globals():
-                self._value.append(globals()[self._value[2]["Message Type"].value()](data[5:end_of_msg],
-                                                                                 (40, (end_of_msg)*8-1),
-                                                                                 sop=SOP[data[2]],
-                                                                                 header=self._value[2],
-                                                                                 last_pdo=last_pdo))
+            if self._value[2]["Extended"].value():
+                self._value.append(ex_msg_header(lst2str(data[5:7]), (40, 55)))
+                self._value.append(globals()[self._value[2]["Message Type"].value()](data[7:end_of_msg],
+                                                                                (56, (end_of_msg)*8-1),
+                                                                                sop=SOP[data[2]],
+                                                                                header=self._value[2],
+                                                                                ex_header=self._value[3],
+                                                                                last_pdo=last_pdo,
+                                                                                last_ext=last_ext))
+            else:
+                if self._value[2]["Message Type"].value() in globals():
+                    self._value.append(globals()[self._value[2]["Message Type"].value()](data[5:end_of_msg],
+                                                                                    (40, (end_of_msg)*8-1),
+                                                                                    sop=SOP[data[2]],
+                                                                                    header=self._value[2],
+                                                                                    last_pdo=last_pdo))
+        except Exception:
+            self._value = f"Error Data: 0x{bytes(data[0:end_of_msg]).hex().upper()}"
 
 
 class WITRN_HID:
@@ -955,6 +1153,8 @@ class WITRN_HID:
             elif len(self.data) < 64:
                 raise ValueError("Data length is less than expected (64 bytes)")
             msg = pd_msg(self.data, self.last_pdo, self.last_ext)
+            if msg.value()[0:10] == "Error Data":
+                return self.timestamp, msg
             if is_pdo(msg):
                 self.last_pdo = msg
             if provide_ext(msg):
