@@ -176,9 +176,9 @@ class general_msg(metadata):
                      f"{struct.unpack('<f', bytes(data[46:50]))[0]}V"),
             metadata(lst2str(data[50:54]), (400, 431), "Current",
                      f"{struct.unpack('<f', bytes(data[50:54]))[0]}A"),
-            metadata(lst2str([data[54]]), (432, 439), "Group", f"{data[54] + 1}"),
-            metadata(lst2str([data[55]]), (440, 447), "CC1", f"{data[55] / 10}V"),
-            metadata(lst2str([data[56]]), (448, 455), "CC2", f"{data[56] / 10}V"),
+            metadata(lst2str([data[54:55]][0]), (432, 439), "Group", f"{data[54] + 1}"),
+            metadata(lst2str([data[55:56]][0]), (440, 447), "CC1", f"{data[55] / 10}V"),
+            metadata(lst2str([data[56:57]][0]), (448, 455), "CC2", f"{data[56] / 10}V"),
         ]
 
 
@@ -186,26 +186,26 @@ class msg_header(metadata):
     def __init__(self, raw: str, bit_loc: tuple, sop: str):
         super().__init__(raw, bit_loc, "Message Header")
         self._value = [
-            metadata(raw[0], 15, "Extended", bool(int(raw[0]))),
+            metadata(raw[0:1], (15, 15), "Extended", bool(int(raw[0:1]))),
             metadata(raw[1:4], (14, 12), "Number of Data Objects", int(raw[1:4], 2)),
             metadata(raw[4:7], (11, 9), "MessageID", int(raw[4:7], 2)),
         ]
 
         if sop == "SOP":
-            self._value.append(metadata(raw[7], 8, "Port Power Role",
-                                       "Sink" if raw[7] == '0' else "Source"))
+            self._value.append(metadata(raw[7:8], (8, 8), "Port Power Role",
+                                       "Sink" if raw[7:8] == '0' else "Source"))
         elif sop in ["SOP'", "SOP''"]:
-            self._value.append(metadata(raw[7], 8, "Cable Plug",
-                                       "DFP or UFP" if raw[7] == '0' else "Cable Plug or VPD"))
+            self._value.append(metadata(raw[7:8], (8, 8), "Cable Plug",
+                                       "DFP or UFP" if raw[7:8] == '0' else "Cable Plug or VPD"))
 
         self._value.append(metadata(raw[8:10], (7, 6), "Specification Revision",
                                    REV[raw[8:10]]))
 
         if sop == "SOP":
-            self._value.append(metadata(raw[10], 5, "Port Data Role",
-                                       "UFP" if raw[10] == '0' else "DFP"))
+            self._value.append(metadata(raw[10:11], (5, 5), "Port Data Role",
+                                       "UFP" if raw[10:11] == '0' else "DFP"))
         elif sop in ["SOP'", "SOP''"]:
-            self._value.append(metadata(raw[10], 5, "Reserved"))
+            self._value.append(metadata(raw[10:11], (5, 5), "Reserved"))
         
         if self._value[0].value():
             self._value.append(metadata(raw[11:16], (4, 0), "Message Type",
@@ -220,18 +220,22 @@ class msg_header(metadata):
 
 
 def is_pdo(msg: metadata) -> bool:
-    type = msg["Message Header"]["Message Type"].value()
-    return type in ["Source_Capabilities", "EPR_Source_Capabilities",]
+    msg_type = msg["Message Header"]["Message Type"].value()
+    return msg_type in ["Source_Capabilities", "EPR_Source_Capabilities"]
+
+def is_rdo(msg: metadata) -> bool:
+    msg_type = msg["Message Header"]["Message Type"].value()
+    return msg_type in ["Request", "EPR_Request"]
 
 
 class ex_msg_header(metadata):
     def __init__(self, raw: str, bit_loc: tuple):
         super().__init__(raw, bit_loc, "Extended Message Header")
         self._value = [
-            metadata(raw[0], 15, "Chunked", bool(int(raw[0]))),
+            metadata(raw[0:1], (15, 15), "Chunked", bool(int(raw[0:1]))),
             metadata(raw[1:5], (14, 11), "Chunk Number", int(raw[1:5], 2)),
-            metadata(raw[5], 10, "Request Chunk", bool(int(raw[5]))),
-            metadata(raw[6], 9, "Reserved"),
+            metadata(raw[5:6], (10, 10), "Request Chunk", bool(int(raw[5:6]))),
+            metadata(raw[6:7], (9, 9), "Reserved"),
             metadata(raw[7:16], (8, 0), "Data Size", int(raw[7:16], 2)),
         ]
 
@@ -241,14 +245,14 @@ class FPDO(metadata):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "FPDO"),
-            metadata(raw[2], 29, "Dual-Role Power", bool(int(raw[2]))),
-            metadata(raw[3], 28, "USB Suspend Supported", bool(int(raw[3]))),
-            metadata(raw[4], 27, "Unconstrained Power", bool(int(raw[4]))),
-            metadata(raw[5], 26, "USB Communications Capable", bool(int(raw[5]))),
-            metadata(raw[6], 25, "Dual-Role Data", bool(int(raw[6]))),
-            metadata(raw[7], 24, "Unchunked Extended Messages Supported", bool(int(raw[7]))),
-            metadata(raw[8], 23, "EPR Capable", bool(int(raw[8]))),
-            metadata(raw[9], 22, "Reserved"),
+            metadata(raw[2:3], (29, 29), "Dual-Role Power", bool(int(raw[2:3]))),
+            metadata(raw[3:4], (28, 28), "USB Suspend Supported", bool(int(raw[3:4]))),
+            metadata(raw[4:5], (27, 27), "Unconstrained Power", bool(int(raw[4:5]))),
+            metadata(raw[5:6], (26, 26), "USB Communications Capable", bool(int(raw[5:6]))),
+            metadata(raw[6:7], (25, 25), "Dual-Role Data", bool(int(raw[6:7]))),
+            metadata(raw[7:8], (24, 24), "Unchunked Extended Messages Supported", bool(int(raw[7:8]))),
+            metadata(raw[8:9], (23, 23), "EPR Capable", bool(int(raw[8:9]))),
+            metadata(raw[9:10], (22, 22), "Reserved"),
             metadata(raw[10:12], (21, 20), "Peak Current", raw[10:12]),
             metadata(raw[12:22], (19, 10), "Voltage", f"{int(raw[12:22], 2) / 20}V"),
             metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) / 100}A")
@@ -260,11 +264,11 @@ class FPDO_S(metadata):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "FPDO Sink"),
-            metadata(raw[2], 29, "Dual-Role Power", bool(int(raw[2]))),
-            metadata(raw[3], 28, "Higher Capability", bool(int(raw[3]))),
-            metadata(raw[4], 27, "Unconstrained Power", bool(int(raw[4]))),
-            metadata(raw[5], 26, "USB Communications Capable", bool(int(raw[5]))),
-            metadata(raw[6], 25, "Dual-Role Data", bool(int(raw[6]))),
+            metadata(raw[2:3], (29, 29), "Dual-Role Power", bool(int(raw[2:3]))),
+            metadata(raw[3:4], (28, 28), "Higher Capability", bool(int(raw[3:4]))),
+            metadata(raw[4:5], (27, 27), "Unconstrained Power", bool(int(raw[4:5]))),
+            metadata(raw[5:6], (26, 26), "USB Communications Capable", bool(int(raw[5:6]))),
+            metadata(raw[6:7], (25, 25), "Dual-Role Data", bool(int(raw[6:7]))),
         ]
 
         if raw[6:8] == "00":
@@ -339,12 +343,12 @@ class PPS_PDO(metadata):
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "APDO"),
             metadata(raw[2:4], (29, 28), "APDO Type", "SPR PPS"),
-            metadata(raw[4], 27, "PPS Power Limited", bool(int(raw[4]))),
+            metadata(raw[4:5], (27, 27), "PPS Power Limited", bool(int(raw[4:5]))),
             metadata(raw[5:7], (26, 25), "Reserved"),
             metadata(raw[7:15], (24, 17), "Maximum Voltage", f"{int(raw[7:15], 2) / 10}V"),
-            metadata(raw[15], 16, "Reserved"),
+            metadata(raw[15:16], (16, 16), "Reserved"),
             metadata(raw[16:24], (15, 8), "Minimum Voltage", f"{int(raw[16:24], 2) / 10}V"),
-            metadata(raw[24], 7, "Reserved"),
+            metadata(raw[24:25], (7, 7), "Reserved"),
             metadata(raw[25:32], (6, 0), "Maximum Current", f"{int(raw[25:32], 2) / 20}A"),
         ]
 
@@ -357,9 +361,9 @@ class PPS_PDO_S(metadata):
             metadata(raw[2:4], (29, 28), "APDO Type", "SPR PPS"),
             metadata(raw[4:7], (27, 25), "Reserved"),
             metadata(raw[7:15], (24, 17), "Maximum Voltage", f"{int(raw[7:15], 2) / 10}V"),
-            metadata(raw[15], 16, "Reserved"),
+            metadata(raw[15:16], (16, 16), "Reserved"),
             metadata(raw[16:24], (15, 8), "Minimum Voltage", f"{int(raw[16:24], 2) / 10}V"),
-            metadata(raw[24], 7, "Reserved"),
+            metadata(raw[24:25], (7, 7), "Reserved"),
             metadata(raw[25:32], (6, 0), "Maximum Current", f"{int(raw[25:32], 2) / 20}A"),
         ]
 
@@ -372,7 +376,7 @@ class EPR_AVS_PDO(metadata):
             metadata(raw[2:4], (29, 28), "APDO Type", "EPR AVS"),
             metadata(raw[4:6], (27, 26), "Peak Current", raw[4:6]),
             metadata(raw[6:15], (25, 17), "Maximum Voltage", f"{int(raw[6:15], 2) / 10}V"),
-            metadata(raw[15], 16, "Reserved"),
+            metadata(raw[15:16], (16, 16), "Reserved"),
             metadata(raw[16:24], (15, 8), "Minimum Voltage", f"{int(raw[16:24], 2) / 10}V"),
             metadata(raw[24:32], (7, 0), "PDP", f"{int(raw[24:32], 2)}W"),
         ]
@@ -386,7 +390,7 @@ class EPR_AVS_PDO_S(metadata):
             metadata(raw[2:4], (29, 28), "APDO Type", "EPR AVS"),
             metadata(raw[4:6], (27, 26), "Reserved"),
             metadata(raw[6:15], (25, 17), "Maximum Voltage", f"{int(raw[6:15], 2) / 10}V"),
-            metadata(raw[15], 16, "Reserved"),
+            metadata(raw[15:16], (16, 16), "Reserved"),
             metadata(raw[16:24], (15, 8), "Minimum Voltage", f"{int(raw[16:24], 2) / 10}V"),
             metadata(raw[24:32], (7, 0), "PDP", f"{int(raw[24:32], 2)}W"),
         ]
@@ -423,12 +427,12 @@ class F_VRDO(metadata):
         self._pdo = kwargs["pdo"]
         self._value = [
             metadata(raw[0:4], (31, 28), "Object Position", int(raw[0:4], 2)),
-            metadata(raw[4], 27, "Giveback", bool(int(raw[4]))),
-            metadata(raw[5], 26, "Capability Mismatch", bool(int(raw[5]))),
-            metadata(raw[6], 25, "USB Communications Capable", bool(int(raw[6]))),
-            metadata(raw[7], 24, "No USB Suspend", bool(int(raw[7]))),
-            metadata(raw[8], 23, "Unchunked Extended Messages Supported", bool(int(raw[8]))),
-            metadata(raw[9], 22, "EPR Capable", bool(int(raw[9]))),
+            metadata(raw[4:5], (27, 27), "Giveback", bool(int(raw[4:5]))),
+            metadata(raw[5:6], (26, 26), "Capability Mismatch", bool(int(raw[5:6]))),
+            metadata(raw[6:7], (25, 25), "USB Communications Capable", bool(int(raw[6:7]))),
+            metadata(raw[7:8], (24, 24), "No USB Suspend", bool(int(raw[7:8]))),
+            metadata(raw[8:9], (23, 23), "Unchunked Extended Messages Supported", bool(int(raw[8:9]))),
+            metadata(raw[9:10], (22, 22), "EPR Capable", bool(int(raw[9:10]))),
             metadata(raw[10:12], (21, 20), "Reserved"),
             metadata(raw[12:22], (19, 10), "Operating Current", f"{int(raw[12:22], 2) / 100}A"),
             metadata(raw[22:32], (9, 0), "Maximum Operating Current", f"{int(raw[22:32], 2) / 100}A"),
@@ -444,12 +448,12 @@ class BRDO(metadata):
         self._pdo = kwargs["pdo"]
         self._value = [
             metadata(raw[0:4], (31, 28), "Object Position", int(raw[0:4], 2)),
-            metadata(raw[4], 27, "Giveback", bool(int(raw[4]))),
-            metadata(raw[5], 26, "Capability Mismatch", bool(int(raw[5]))),
-            metadata(raw[6], 25, "USB Communications Capable", bool(int(raw[6]))),
-            metadata(raw[7], 24, "No USB Suspend", bool(int(raw[7]))),
-            metadata(raw[8], 23, "Unchunked Extended Messages Supported", bool(int(raw[8]))),
-            metadata(raw[9], 22, "EPR Capable", bool(int(raw[9]))),
+            metadata(raw[4:5], (27, 27), "Giveback", bool(int(raw[4:5]))),
+            metadata(raw[5:6], (26, 26), "Capability Mismatch", bool(int(raw[5:6]))),
+            metadata(raw[6:7], (25, 25), "USB Communications Capable", bool(int(raw[6:7]))),
+            metadata(raw[7:8], (24, 24), "No USB Suspend", bool(int(raw[7:8]))),
+            metadata(raw[8:9], (23, 23), "Unchunked Extended Messages Supported", bool(int(raw[8:9]))),
+            metadata(raw[9:10], (22, 22), "EPR Capable", bool(int(raw[9:10]))),
             metadata(raw[10:12], (21, 20), "Reserved"),
             metadata(raw[12:22], (19, 10), "Operating Power", f"{int(raw[12:22], 2) / 4}W"),
             metadata(raw[22:32], (9, 0), "Maximum Operating Power", f"{int(raw[22:32], 2) / 4}W"),
@@ -465,13 +469,13 @@ class PPS_RDO(metadata):
         self._pdo = kwargs["pdo"]
         self._value = [
             metadata(raw[0:4], (31, 28), "Object Position", int(raw[0:4], 2)),
-            metadata(raw[4], 27, "Reserved"),
-            metadata(raw[5], 26, "Capability Mismatch", bool(int(raw[5]))),
-            metadata(raw[6], 25, "USB Communications Capable", bool(int(raw[6]))),
-            metadata(raw[7], 24, "No USB Suspend", bool(int(raw[7]))),
-            metadata(raw[8], 23, "Unchunked Extended Messages Supported", bool(int(raw[8]))),
-            metadata(raw[9], 22, "EPR Capable", bool(int(raw[9]))),
-            metadata(raw[10], 21, "Reserved"),
+            metadata(raw[4:5], (27, 27), "Reserved"),
+            metadata(raw[5:6], (26, 26), "Capability Mismatch", bool(int(raw[5:6]))),
+            metadata(raw[6:7], (25, 25), "USB Communications Capable", bool(int(raw[6:7]))),
+            metadata(raw[7:8], (24, 24), "No USB Suspend", bool(int(raw[7:8]))),
+            metadata(raw[8:9], (23, 23), "Unchunked Extended Messages Supported", bool(int(raw[8:9]))),
+            metadata(raw[9:10], (22, 22), "EPR Capable", bool(int(raw[9:10]))),
+            metadata(raw[10:11], (21, 21), "Reserved"),
             metadata(raw[11:23], (20, 9), "Output Voltage", f"{int(raw[11:23], 2) / 50}V"),
             metadata(raw[23:25], (8, 7), "Reserved"),
             metadata(raw[25:32], (6, 0), "Operating Current", f"{int(raw[25:32], 2) / 20}A"),
@@ -487,13 +491,13 @@ class AVS_RDO(metadata):
         self._pdo = kwargs["pdo"]
         self._value = [
             metadata(raw[0:4], (31, 28), "Object Position", int(raw[0:4], 2)),
-            metadata(raw[4], 27, "Reserved"),
-            metadata(raw[5], 26, "Capability Mismatch", bool(int(raw[5]))),
-            metadata(raw[6], 25, "USB Communications Capable", bool(int(raw[6]))),
-            metadata(raw[7], 24, "No USB Suspend", bool(int(raw[7]))),
-            metadata(raw[8], 23, "Unchunked Extended Messages Supported", bool(int(raw[8]))),
-            metadata(raw[9], 22, "EPR Capable", bool(int(raw[9]))),
-            metadata(raw[10], 21, "Reserved"),
+            metadata(raw[4:5], (27, 27), "Reserved"),
+            metadata(raw[5:6], (26, 26), "Capability Mismatch", bool(int(raw[5:6]))),
+            metadata(raw[6:7], (25, 25), "USB Communications Capable", bool(int(raw[6:7]))),
+            metadata(raw[7:8], (24, 24), "No USB Suspend", bool(int(raw[7:8]))),
+            metadata(raw[8:9], (23, 23), "Unchunked Extended Messages Supported", bool(int(raw[8:9]))),
+            metadata(raw[9:10], (22, 22), "EPR Capable", bool(int(raw[9:10]))),
+            metadata(raw[10:11], (21, 21), "Reserved"),
             metadata(raw[11:23], (20, 9), "Output Voltage", f"{int(raw[11:23], 2) / 40}V"),
             metadata(raw[23:25], (8, 7), "Reserved"),
             metadata(raw[25:32], (6, 0), "Operating Current", f"{int(raw[25:32], 2) / 20}A"),
@@ -570,11 +574,10 @@ class Request(metadata):
     def __init__(self, data, bit_loc, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
-        self._value = []
         pdo_list = kwargs["last_pdo"]["Data Objects"].value()
         sub_raw = lst2str(data[0:4])
         pdo = pdo_list[int(sub_raw[0:4], 2) - 1]
-        self._value.append(rdo_type(pdo)(sub_raw, (0, 31), "RDO", pdo=pdo))
+        self._value = [(rdo_type(pdo)(sub_raw, (0, 31), "RDO", pdo=pdo))]
 
 
 class BIST(metadata):
@@ -626,11 +629,11 @@ class Battery_Status(metadata):
         ]
 
         Batter_Info = [
-            metadata(BSDO_raw[23], 0, "Invalid Battery Reference", bool(int(BSDO_raw[23]))),
-            metadata(BSDO_raw[22], 1, "Battery Present", bool(int(BSDO_raw[22]))),
+            metadata(BSDO_raw[23:24], (0, 0), "Invalid Battery Reference", bool(int(BSDO_raw[23:24]))),
+            metadata(BSDO_raw[22:23], (1, 1), "Battery Present", bool(int(BSDO_raw[22]))),
         ]
 
-        if BSDO_raw[22] == '1':
+        if bool(int(BSDO_raw[22])):
             if BSDO_raw[20:22] == "00":
                 Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Battery is Charging"))
             elif BSDO_raw[20:22] == "01":
@@ -639,7 +642,7 @@ class Battery_Status(metadata):
                 Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Battery is Idle"))
             elif BSDO_raw[20:22] == "11":
                 Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Reserved"))
-        elif BSDO_raw[22] == '0':
+        else:
             Batter_Info.append(metadata(BSDO_raw[20:22], (3, 2), "Battery Charging Status", "Reserved"))
         
         Batter_Info.append(metadata(BSDO_raw[16:20], (7, 4), "Reserved"))
@@ -657,20 +660,20 @@ class Alert(metadata):
         ppr = kwargs["header"][3].value()
         ADO_raw = lst2str(data[0:4])
         Type_of_Alert = [
-            metadata(ADO_raw[7], 0, "Reserved"),
-            metadata(ADO_raw[6], 1, "Battery Status Changed Event", bool(int(ADO_raw[25]))),
-            metadata(ADO_raw[5], 2, "OCP Event", bool(int(ADO_raw[26]))),
+            metadata(ADO_raw[7:8], (0, 0), "Reserved"),
+            metadata(ADO_raw[6:7], (1, 1), "Battery Status Changed Event", bool(int(ADO_raw[6:7]))),
+            metadata(ADO_raw[5:6], (2, 2), "OCP Event", bool(int(ADO_raw[5:6]))),
         ]
 
         if ppr == "Source":
-            Type_of_Alert.append(metadata(ADO_raw[4], 3, "OTP Event", bool(int(ADO_raw[27]))))
+            Type_of_Alert.append(metadata(ADO_raw[4:5], (3, 3), "OTP Event", bool(int(ADO_raw[4:5]))))
         elif ppr == "Sink":
-            Type_of_Alert.append(metadata(ADO_raw[4], 3, "Reserved"))
+            Type_of_Alert.append(metadata(ADO_raw[4:5], (3, 3), "Reserved"))
         
-        Type_of_Alert.append(metadata(ADO_raw[3], 4, "Operating Condition Change", bool(int(ADO_raw[28]))))
-        Type_of_Alert.append(metadata(ADO_raw[2], 5, "Source Input Change Event", bool(int(ADO_raw[29]))))
-        Type_of_Alert.append(metadata(ADO_raw[1], 6, "OVP Event", bool(int(ADO_raw[30]))))
-        Type_of_Alert.append(metadata(ADO_raw[0], 7, "Extended Alert Event", bool(int(ADO_raw[31]))))
+        Type_of_Alert.append(metadata(ADO_raw[3:4], (4, 4), "Operating Condition Change", bool(int(ADO_raw[3:4]))))
+        Type_of_Alert.append(metadata(ADO_raw[2:3], (5, 5), "Source Input Change Event", bool(int(ADO_raw[2:3]))))
+        Type_of_Alert.append(metadata(ADO_raw[1:2], (6, 6), "OVP Event", bool(int(ADO_raw[1:2]))))
+        Type_of_Alert.append(metadata(ADO_raw[0:1], (7, 7), "Extended Alert Event", bool(int(ADO_raw[0:1]))))
 
         ADO = [
             metadata(ADO_raw[0:8], (31, 24), "Type of Alert", Type_of_Alert),
@@ -679,7 +682,7 @@ class Alert(metadata):
             metadata(ADO_raw[16:28], (15, 4), "Reserved")
         ]
 
-        if ADO_raw[0] == '1':
+        if ADO_raw[0:1] == '1':
             if int(ADO_raw[28:32], 2) == 1:
                 ADO.append(metadata(ADO_raw[28:32], (3, 0), "Extended Alert Event Type", "Power state change"))
             elif int(ADO_raw[28:32], 2) == 2:
@@ -718,7 +721,7 @@ class Enter_USB(metadata):
         self._raw = lst2str(data, '>')
         EUDO_raw = lst2str(data[0:4])
         EUDO = [
-            metadata(EUDO_raw[0], 31, "Reserved")
+            metadata(EUDO_raw[0:1], (31, 31), "Reserved")
         ]
 
         if EUDO_raw[1:4] == "000":
@@ -730,19 +733,15 @@ class Enter_USB(metadata):
         else:
             EUDO.append(metadata(EUDO_raw[1:4], (30, 28), "USB Mode", "Reserved"))
 
-        EUDO.append(metadata(EUDO_raw[4], 27, "Reserved"))
+        EUDO.append(metadata(EUDO_raw[4:5], (27, 27), "Reserved"))
 
-        if EUDO_raw[5] == '0':
-            EUDO.append(metadata(EUDO_raw[5], 26, "USB4 DRD", "Not Capable"))
-        elif EUDO_raw[5] == '1':
-            EUDO.append(metadata(EUDO_raw[5], 26, "USB4 DRD", "Capable"))
+        EUDO.append(metadata(EUDO_raw[5:6], (26, 26), "USB4 DRD",
+                             "Capable" if bool(int(EUDO_raw[5:6])) else "Not Capable"))
+
+        EUDO.append(metadata(EUDO_raw[6:7], (25, 25), "USB3 DRD", 
+                             "Capable" if bool(int(EUDO_raw[6:7])) else "Not Capable"))
         
-        if EUDO_raw[6] == '0':
-            EUDO.append(metadata(EUDO_raw[6], 25, "USB3 DRD", "Not Capable"))
-        elif EUDO_raw[6] == '1':
-            EUDO.append(metadata(EUDO_raw[6], 25, "USB3 DRD", "Capable"))
-        
-        EUDO.append(metadata(EUDO_raw[7], 24, "Reserved"))
+        EUDO.append(metadata(EUDO_raw[7:8], (24, 24), "Reserved"))
 
         if EUDO_raw[8:11] == "000":
             EUDO.append(metadata(EUDO_raw[8:11], (23, 21), "Cable Speed", "USB2.0 Only"))
@@ -775,10 +774,10 @@ class Enter_USB(metadata):
         elif EUDO_raw[13:15] == "11":
             EUDO.append(metadata(EUDO_raw[13:15], (18, 17), "Cable Current", "5A"))
 
-        EUDO.append(metadata(EUDO_raw[15], 16, "PCIe Support", bool(int(EUDO_raw[15]))))
-        EUDO.append(metadata(EUDO_raw[16], 15, "DP Support", bool(int(EUDO_raw[16]))))
-        EUDO.append(metadata(EUDO_raw[17], 14, "TBT Support", bool(int(EUDO_raw[17]))))
-        EUDO.append(metadata(EUDO_raw[18], 13, "Host Present", bool(int(EUDO_raw[18]))))
+        EUDO.append(metadata(EUDO_raw[15:16], (16, 16), "PCIe Support", bool(int(EUDO_raw[15:16]))))
+        EUDO.append(metadata(EUDO_raw[16:17], (15, 15), "DP Support", bool(int(EUDO_raw[16:17]))))
+        EUDO.append(metadata(EUDO_raw[17:18], (14, 14), "TBT Support", bool(int(EUDO_raw[17:18]))))
+        EUDO.append(metadata(EUDO_raw[18:19], (13, 13), "Host Present", bool(int(EUDO_raw[18:19]))))
         EUDO.append(metadata(EUDO_raw[19:32], (12, 0), "Reserved"))
 
         self._value = [metadata(EUDO_raw, (0, 31), "EUDO", EUDO)]
@@ -852,15 +851,15 @@ class Source_Info(metadata):
         SIDO_raw = lst2str(data[0:4])
         SIDO = []
 
-        if SIDO_raw[0] == '0':
-            SIDO.append(SIDO_raw[0], 31, "Port Type", "Managed Capability Port")
-        elif SIDO_raw[0] == '1':
-            SIDO.append(SIDO_raw[0], 31, "Port Type", "Guaranteed Capability Port")
+        if SIDO_raw[0:1] == '0':
+            SIDO.append(metadata(SIDO_raw[0:1], (31, 31), "Port Type", "Managed Capability Port"))
+        elif SIDO_raw[0:1] == '1':
+            SIDO.append(metadata(SIDO_raw[0:1], (31, 31), "Port Type", "Guaranteed Capability Port"))
         
-        SIDO.append(SIDO_raw[1:8], (30, 24), "Reserved")
-        SIDO.append(SIDO_raw[8:16], (23, 16), "Port Maximum PDP", f"{int(SIDO_raw[8:16], 2)}W")
-        SIDO.append(SIDO_raw[16:24], (15, 8), "Port Present PDP", f"{int(SIDO_raw[16:24], 2)}W")
-        SIDO.append(SIDO_raw[24:32], (7, 0), "Port Reported PDP", f"{int(SIDO_raw[24:32], 2)}W")
+        SIDO.append(metadata(SIDO_raw[1:8], (30, 24), "Reserved"))
+        SIDO.append(metadata(SIDO_raw[8:16], (23, 16), "Port Maximum PDP", f"{int(SIDO_raw[8:16], 2)}W"))
+        SIDO.append(metadata(SIDO_raw[16:24], (15, 8), "Port Present PDP", f"{int(SIDO_raw[16:24], 2)}W"))
+        SIDO.append(metadata(SIDO_raw[24:32], (7, 0), "Port Reported PDP", f"{int(SIDO_raw[24:32], 2)}W"))
 
         self._value = [metadata(SIDO_raw, (0, 31), "SIDO", SIDO)]
 
@@ -902,17 +901,210 @@ def need_ext(ext_header: ex_msg_header):
             return True
     return False
 
-# TODO
+
 class Source_Capabilities_Extended(metadata):
     def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+        super().__init__(bit_loc=bit_loc, field="SCEDB")
         self._raw = lst2str(data, '>')
+        self._value = [
+            metadata(lst2str(data[0:2]), (0, 15), "VID", f"0x{bytes(data[0:2]).hex().upper()}"),
+            metadata(lst2str(data[2:4]), (16, 31), "PID", f"0x{bytes(data[2:4]).hex().upper()}"),
+            metadata(lst2str(data[4:8]), (32, 63), "XID", f"0x{bytes(data[0:2]).hex().upper()}"),
+            metadata(lst2str(data[8:9]), (64, 71), "FW Version", f"0x{bytes(data[8:9]).hex().upper()}"),
+            metadata(lst2str(data[9:10]), (72, 79), "HW Version", f"0x{bytes(data[9:10]).hex().upper()}")
+        ]
 
-# TODO
+        Voltage_Regulation = []
+        VR_raw = lst2str(data[10:11])
+        if VR_raw[6:8] == "00":
+            Voltage_Regulation.append(metadata(VR_raw[6:8], (1, 0), "Load Stap Slew Rate", "150mA/μs"))
+        if VR_raw[6:8] == "01":
+            Voltage_Regulation.append(metadata(VR_raw[6:8], (1, 0), "Load Stap Slew Rate", "500mA/μs"))
+        else:
+            Voltage_Regulation.append(metadata(VR_raw[6:8], (1, 0), "Reserved"))
+
+        Voltage_Regulation.append(metadata(VR_raw[5:6], (2, 2), "Load Step Magnitude",
+                                           "90% IoC" if bool(int(VR_raw[5:6])) else "25% IoC"))
+
+        Voltage_Regulation.append(metadata(VR_raw[0:5], (7, 3), "Reserved"))
+
+        self._value.append(metadata(VR_raw, (80, 87), "Voltage Regulation", Voltage_Regulation))
+        
+        if data[11:12] == [0]:
+            self._value(metadata(lst2str(data[11:12]), (88, 95), "Holdup Time", "Not Supported"))
+        else:
+            self._value(metadata(lst2str(data[11:12]), (88, 95), "Holdup Time", f"{data[11:12][0]}ms"))
+
+        Compliance_raw = lst2str(data[12:13])
+        Compliance = [
+            metadata(Compliance_raw[7:8], (0, 0), "LPS compliant", bool(int(Compliance_raw[7:8]))),
+            metadata(Compliance_raw[6:7], (1, 1), "PS1 compliant", bool(int(Compliance_raw[6:7]))),
+            metadata(Compliance_raw[5:6], (2, 2), "PS2 compliant", bool(int(Compliance_raw[5:6]))),
+            metadata(Compliance_raw[0:5], (7, 3), "Reserved")
+        ]
+        self._value.append(metadata(Compliance_raw, (96, 103), "Compliance", Compliance))
+
+        TC_raw = lst2str(data[13:14])
+        Touch_Current = [
+            metadata(TC_raw[7:8], (0, 0), "Low touch current EPS", bool(int(TC_raw[7:8]))),
+            metadata(TC_raw[6:7], (1, 1), "Ground pin supported", bool(int(TC_raw[6:7]))),
+            metadata(TC_raw[5:6], (2, 2), "Ground pin intended for protective earth", bool(int(TC_raw[5:6]))),
+            metadata(TC_raw[0:5], (7, 3), "Reserved")
+        ]
+        self._value.append(metadata(TC_raw, (104, 111), "Touch Current", Touch_Current))
+
+        for i in range(3):
+            PC_raw = lst2str(data[14+i*2:16+i*2])
+            Peak_Current = [
+                metadata(PC_raw[11:16], (4, 0), "Percentage Overload", f"{min(25, int(PC_raw[11:16], 2)) * 10}%"),
+                metadata(PC_raw[5:11], (10, 5), "Overload Period", f"{int(PC_raw[5:11], 2) * 20}ms"),
+                metadata(PC_raw[1:5], (14, 11), "Duty Cycle", f"{int(PC_raw[1:5], 2) * 5}%"),
+                metadata(PC_raw[0:1], (15, 15), "VBUS Droop", bool(int(PC_raw[0:1])))
+            ]
+            self._value.append(metadata(PC_raw, ((14+i*2)*8, (16+i*2)*8-1), "Peak Current", Peak_Current))
+        
+        TT_raw = lst2str(data[20:21])
+        if data[20:21] == [0]:
+            self._value.append(metadata(TT_raw, (160, 167), "Touch Temp", "[IEC 60950-1]"))
+        elif data[20:21] == [1]:
+            self._value.append(metadata(TT_raw, (160, 167), "Touch Temp", "[IEC 62368-1] TS1"))
+        elif data[20:21] == [2]:
+            self._value.append(metadata(TT_raw, (160, 167), "Touch Temp", "[IEC 62368-1] TS2"))
+        else:
+            self._value.append(metadata(TT_raw, (160, 167), "Touch Temp", "Reserved"))
+        
+        SI_raw = lst2str[21:22]
+        Source_Inputs = [metadata(SI_raw[7:8], (0, 0), "External Power Supply", bool(int(SI_raw[7:8])))]
+
+        if bool(int(SI_raw[7:8])):
+            Source_Inputs.append(metadata(SI_raw[6:7], (1, 1), "Constrained", bool(1 - int(SI_raw[6:7]))))
+        else:
+            Source_Inputs.append(metadata(SI_raw[6:7], (1, 1), "Reserved"))
+
+        Source_Inputs.append(metadata(SI_raw[5:6], (2, 2), "Internal Battery", bool(int(SI_raw[5:6]))))
+        Source_Inputs.append(metadata(SI_raw[0:5], (7, 3), "Reserved"))
+
+        self._value.append(metadata(SI_raw, (168, 175), "Source Inputs", Source_Inputs))
+        self._value.append(metadata(lst2str(data[22:23]), (176, 183),
+                                    "Number of Batteries/Battery Slots", lst2str(data[22:23])))
+        self._value.append(metadata(lst2str(data[23:24]), (184, 191), 
+                                    "SPR Source PDP Rating", f"{data[23:24][0]}W"))
+        self._value.append(metadata(lst2str(data[24:25]), (192, 199), 
+                                    "EPR Source PDP Rating", f"{data[24:25][0]}W"))
+
+
 class Status(metadata):
     def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+        super().__init__(bit_loc=bit_loc, field="SDB")
         self._raw = lst2str(data, '>')
+        self._value = []
+
+        if data[0:1] == [0]:
+            self._value.append(metadata(lst2str(data[0:1]), (0, 7), "Internal Temp", "Not Support"))
+        elif data[0:1] == [1]:
+            self._value.append(metadata(lst2str(data[0:1]), (0, 7), "Internal Temp", "Less than 2℃"))
+        else:
+            self._value.append(metadata(lst2str(data[0:1]), (0, 7), "Internal Temp", f"{data[0:1][0]}℃"))
+        
+        PI_raw = lst2str(data[1:2])
+        Present_Input = [
+            metadata(PI_raw[7:8], (0, 0), "Reserved"),
+            metadata(PI_raw[6:7], (1, 1), "External Power", bool(int(PI_raw[6:7])))
+        ]
+
+        if bool(int(PI_raw[6:7])):
+            Present_Input.append(metadata(PI_raw[5:6], (2, 2), "External Power Type",
+                                          "AC" if bool(int(PI_raw[5:6])) else "DC"))
+        else:
+            Present_Input.append(metadata(PI_raw[5:6], (2, 2), "Reserved"))
+        
+        Present_Input.append(metadata(PI_raw[4:5], (3, 3), "Internal Power from Battery", bool(int(PI_raw[4:5]))))
+        Present_Input.append(metadata(PI_raw[3:4], (4, 4), "Internal Power from non-Battery", bool(int(PI_raw[3:4]))))
+        Present_Input.append(metadata(PI_raw[0:3], (7, 5), "Reserved"))
+
+        self._value.append(metadata(PI_raw, (8, 15), "Present Input", Present_Input))
+
+        if bool(int(PI_raw[4:5])):
+            self._value.append(metadata(lst2str(data[2:3]), (16, 23), "Present Battery Input", lst2str(data[2:3])))
+        else:
+            self._value.append(metadata(lst2str(data[2:3]), (16, 23), "Reserved"))
+        
+        EF_raw = lst2str(data[3:4])
+        Event_Flags = [
+            metadata(EF_raw[7:8], (0, 0), "Reserved"),
+            metadata(EF_raw[6:7], (1, 1), "OCP Event", bool(int(EF_raw[6:7]))),
+            metadata(EF_raw[5:6], (2, 2), "OTP Event", bool(int(EF_raw[5:6]))),
+            metadata(EF_raw[4:5], (3, 3), "OVP Event", bool(int(EF_raw[4:5])))
+        ]
+
+        if kwargs["last_rdo"]["RDO"].pdo().raw()[0:4] == "1100":
+            Event_Flags.append(metadata(EF_raw[3:4], (4, 4), "CL/CV Mode",
+                                        "CL" if bool(int(EF_raw[3:4])) else "CV"))
+        else:
+            Event_Flags.append(metadata(EF_raw[3:4], (4, 4), "Reserved"))
+
+        Event_Flags.append(metadata(EF_raw[0:3], (7, 5), "Reserved"))
+
+        self._value.append(metadata(EF_raw, (24, 31), "Event Flags", Event_Flags))
+
+        TS_raw = lst2str(data[4:5])
+        if TS_raw == "00000000":
+            self._value.append(metadata(TS_raw, (32, 39), "Temperature Status", "Not Supported"))
+        elif TS_raw == "00000010":
+            self._value.append(metadata(TS_raw, (32, 39), "Temperature Status", "Normal"))
+        elif TS_raw == "00000100":
+            self._value.append(metadata(TS_raw, (32, 39), "Temperature Status", "Warning"))
+        elif TS_raw == "00000110":
+            self._value.append(metadata(TS_raw, (32, 39), "Temperature Status", "Over Temperature"))
+        else:
+            self._value.append(metadata(TS_raw, (32, 39), "Temperature Status", "Reserved"))
+
+        PS_raw = lst2str(data[5:6])
+        Power_Status = [
+            metadata(PS_raw[7:8], (0, 0), "Reserved"),
+            metadata(PS_raw[6:7], (1, 1), "Cable Supported Current", bool(int(PS_raw[6:7]))),
+            metadata(PS_raw[5:6], (2, 2), "Sourcing Other Ports", bool(int(PS_raw[5:6]))),
+            metadata(PS_raw[4:5], (3, 3), "Insufficient External Power", bool(int(PS_raw[4:5]))),
+            metadata(PS_raw[3:4], (4, 4), "Event Flags in Place", bool(int(PS_raw[3:4]))),
+            metadata(PS_raw[2:3], (5, 5), "Temperature", bool(int(PS_raw[2:3]))),
+            metadata(PS_raw[0:2], (7, 6), "Reserved")
+        ]
+        self._value.append(metadata(PS_raw, (40, 47), "Power Status", Power_Status))
+
+        PSC_raw = lst2str(data[6:7])
+        Power_State_Change = []
+
+        if PSC_raw[5:8] == "000":
+            Power_State_Change.append(metadata(PSC_raw[5:8], (2, 0), "New Power State", "Status Not Supported"))
+        elif PSC_raw[5:8] == "001":
+            Power_State_Change.append(metadata(PSC_raw[5:8], (2, 0), "New Power State", "S0"))
+        elif PSC_raw[5:8] == "010":
+            Power_State_Change.append(metadata(PSC_raw[5:8], (2, 0), "New Power State", "Modern Standby"))
+        elif PSC_raw[5:8] == "011":
+            Power_State_Change.append(metadata(PSC_raw[5:8], (2, 0), "New Power State", "S3"))
+        elif PSC_raw[5:8] == "100":
+            Power_State_Change.append(metadata(PSC_raw[5:8], (2, 0), "New Power State", "S4"))
+        elif PSC_raw[5:8] == "101":
+            Power_State_Change.append(metadata(PSC_raw[5:8], (2, 0), "New Power State", "S5"))
+        elif PSC_raw[5:8] == "110":
+            Power_State_Change.append(metadata(PSC_raw[5:8], (2, 0), "New Power State", "G3"))
+        elif PSC_raw[5:8] == "111":
+            Power_State_Change.append(metadata(PSC_raw[5:8], (2, 0), "New Power State", "Reserved"))
+
+        if PSC_raw[2:5] == "000":
+            Power_State_Change.append(metadata(PSC_raw[2:5], (5, 3), "New Power State indicator", "Off LED"))
+        elif PSC_raw[2:5] == "001":
+            Power_State_Change.append(metadata(PSC_raw[2:5], (5, 3), "New Power State indicator", "On LED"))
+        elif PSC_raw[2:5] == "010":
+            Power_State_Change.append(metadata(PSC_raw[2:5], (5, 3), "New Power State indicator", "Blinking LED"))
+        elif PSC_raw[2:5] == "011":
+            Power_State_Change.append(metadata(PSC_raw[2:5], (5, 3), "New Power State indicator", "Breathing LED"))
+        else:
+            Power_State_Change.append(metadata(PSC_raw[2:5], (5, 3), "New Power State indicator", "Reserved"))
+
+        Power_State_Change.append(metadata(PSC_raw[0:2], (7, 6), "Reserved"))
+
+        self._value.append(metadata(PSC_raw, (48, 55), "Power State Change", Power_State_Change))
 
 # TODO
 class Get_Battery_Cap(metadata):
@@ -1041,7 +1233,7 @@ class EPR_Source_Capabilities(metadata):
     def _get_full_data(self) -> list:
         return self._full_data
 
-    def _get_full_num_objs(self) -> int:
+    def _get_full_num_objs(self) -> float:
         return self._full_num_objs
 
     def full_raw(self) -> str:
@@ -1085,16 +1277,16 @@ class Reserved(metadata):
 
 
 class pd_msg(metadata):
-    def __init__(self, data: list, last_pdo: metadata=None, last_ext: metadata=None):
+    def __init__(self, data: list, last_pdo: metadata=None, last_ext: metadata=None, last_rdo: metadata=None):
         super().__init__(field="pd")
         end_of_msg = data[1] + 2
         self._raw = lst2str(data[0:end_of_msg], '>')
         self._bit_loc = (0, (end_of_msg) * 8 - 1)
         try:
             self._value = [
-                metadata(lst2str([data[1]]), (8, 15), "Length", data[1]),
-                metadata(lst2str([data[2]]), (16, 23), "SOP*", SOP[data[2]]),
-                msg_header(lst2str(data[3:5]), (24, 39), SOP[data[2]])
+                metadata(lst2str(data[1:2]), (8, 15), "Length", data[1:2][0]),
+                metadata(lst2str(data[2:3]), (16, 23), "SOP*", SOP[data[2:3][0]]),
+                msg_header(lst2str(data[3:5]), (24, 39), SOP[data[2:3][0]])
             ]
 
             end_of_msg = 5 + self._value[2][1].value() * 4
@@ -1103,28 +1295,35 @@ class pd_msg(metadata):
                 self._value.append(ex_msg_header(lst2str(data[5:7]), (40, 55)))
                 self._value.append(globals()[self._value[2]["Message Type"].value()](data[7:end_of_msg],
                                                                                 (56, (end_of_msg)*8-1),
-                                                                                sop=SOP[data[2]],
+                                                                                sop=SOP[data[2:3][0]],
                                                                                 header=self._value[2],
                                                                                 ex_header=self._value[3],
                                                                                 last_pdo=last_pdo,
-                                                                                last_ext=last_ext))
+                                                                                last_ext=last_ext,
+                                                                                last_rdo=last_rdo))
             else:
                 if self._value[2]["Message Type"].value() in globals():
                     self._value.append(globals()[self._value[2]["Message Type"].value()](data[5:end_of_msg],
                                                                                     (40, (end_of_msg)*8-1),
-                                                                                    sop=SOP[data[2]],
+                                                                                    sop=SOP[data[2:3][0]],
                                                                                     header=self._value[2],
                                                                                     last_pdo=last_pdo))
         except Exception:
-            self._value = f"Error Data: 0x{bytes(data[0:end_of_msg]).hex().upper()}"
+            self._value = [
+                metadata(lst2str(data[1:2]), (8, 15), "Length", data[1]),
+                metadata(lst2str(data[2:3]), (16, 23), "SOP*", SOP[data[2]]),
+                metadata(lst2str(data[3:data[1] + 2]), (24, (end_of_msg) * 8 - 1), "Error Data",
+                         f"0x{bytes(data[0:end_of_msg]).hex().upper()}")
+            ]
 
 
-class WITRN_HID:
+class WITRN_DEV:
     def __init__(self, vid=K2_TARGET_VID, pid=K2_TARGET_PID):
         self.data = None
         self.timestamp = None
         self.last_pdo = None
         self.last_ext = None
+        self.last_rdo = None
 
         self.dev = hid.device()
         self.dev.open(vid, pid)
@@ -1146,26 +1345,28 @@ class WITRN_HID:
                 raise ValueError("Data length is less than expected (64 bytes)")
             return general_msg(data)
 
-    def pd_unpack(self, data: list = None) -> metadata:
+    def pd_unpack(self, data: list = None, last_pdo: metadata=None, last_ext: metadata=None, last_rdo: metadata=None) -> metadata:
         if data is None:
             if self.data is None:
                 raise ValueError("No data available to unpack")
             elif len(self.data) < 64:
                 raise ValueError("Data length is less than expected (64 bytes)")
-            msg = pd_msg(self.data, self.last_pdo, self.last_ext)
-            if msg.value()[0:10] == "Error Data":
+            msg = pd_msg(self.data, self.last_pdo, self.last_ext, self.last_rdo)
+            if msg[2].field() == "Error Data":
                 return self.timestamp, msg
             if is_pdo(msg):
                 self.last_pdo = msg
             if provide_ext(msg):
                 self.last_ext = msg
+            if is_rdo(msg):
+                self.last_rdo = msg
             return self.timestamp, msg
         else:
             if len(data) < 64:
                 raise ValueError("Data length is less than expected (64 bytes)")
-            return pd_msg(data)
+            return pd_msg(data, last_pdo, last_ext, last_rdo)
         
-    def auto_unpack(self, data: list = None) -> metadata:
+    def auto_unpack(self, data: list = None, last_pdo: metadata=None, last_ext: metadata=None, last_rdo: metadata=None) -> metadata:
         if data is None:
             if self.data is None:
                 raise ValueError("No data available to unpack")
@@ -1181,7 +1382,7 @@ class WITRN_HID:
             if data[0] == 255:
                 return self.general_unpack(data)
             elif data[0] == 254:
-                return self.pd_unpack(data)
+                return self.pd_unpack(data, last_pdo, last_ext, last_rdo)
             
 
     def close(self):
@@ -1189,7 +1390,7 @@ class WITRN_HID:
 
 
 if __name__ == "__main__":
-    k2 = WITRN_HID()
+    k2 = WITRN_DEV()
     while True:
         k2.read_data()
         _, pkg = k2.auto_unpack()
