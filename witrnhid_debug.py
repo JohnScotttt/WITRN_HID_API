@@ -1,111 +1,20 @@
+# Start of File
+# Copyright (c) 2025 JohnScotttt
+# Version pre 0.1 debug
+
 import hid
 import struct
 import time
 from datetime import timedelta
 
+__version__ = "pre 0.1"
+
+
 K2_TARGET_VID = 0x0716
 K2_TARGET_PID = 0x5060
 
-SOP = {
-    224: "SOP",
-    192: "SOP'",
-    160: "SOP''",
-    128: "SOP'_DEBUG",
-    96: "SOP''_DEBUG",
-}
 
-
-REV = {
-    "00": "Rev 1.0",
-    "01": "Rev 2.0",
-    "10": "Rev 3.x",
-    "11": "Reserved",
-}
-
-
-CMT = {
-    "00001": "GoodCRC",
-    "00010": "GotoMin",
-    "00011": "Accept",
-    "00100": "Reject",
-    "00101": "Ping",
-    "00110": "PS_RDY",
-    "00111": "Get_Source_Cap",
-    "01000": "Get_Sink_Cap",
-    "01001": "DR_Swap",
-    "01010": "PR_Swap",
-    "01011": "VCONN_Swap",
-    "01100": "Wait",
-    "01101": "Soft_Reset",
-    "01110": "Data_Reset",
-    "01111": "Data_Reset_Complete",
-    "10000": "Not_Supported",
-    "10001": "Get_Source_Cap_Extended",
-    "10010": "Get_Status",
-    "10011": "FR_Swap",
-    "10100": "Get_PPS_Status",
-    "10101": "Get_Country_Codes",
-    "10110": "Get_Sink_Cap_Extended",
-    "10111": "Get_Source_Info",
-    "11000": "Get_Revision",
-}
-
-
-DMT = {
-    "00001": "Source_Capabilities",
-    "00010": "Request",
-    "00011": "BIST",
-    "00100": "Sink_Capabilities",
-    "00101": "Battery_Status",
-    "00110": "Alert",
-    "00111": "Get_Country_Info",
-    "01000": "Enter_USB",
-    "01001": "EPR_Request",
-    "01010": "EPR_Mode",
-    "01011": "Source_Info",
-    "01100": "Revision",
-    "01111": "Vendor_Defined",
-}
-
-
-EMT = {
-    "00001": "Source_Capabilities_Extended",
-    "00010": "Status",
-    "00011": "Get_Battery_Cap",
-    "00100": "Get_Battery_Status",
-    "00101": "Battery_Capabilities",
-    "00110": "Get_Manufacturer_Info",
-    "00111": "Manufacturer_Info",
-    "01000": "Security_Request",
-    "01001": "Security_Response",
-    "01010": "Firmware_Update_Request",
-    "01011": "Firmware_Update_Response",
-    "01100": "PPS_Status",
-    "01101": "Country_Info",
-    "01110": "Country_Codes",
-    "01111": "Sink_Capabilities_Extended",
-    "10000": "Extended_Control",
-    "10001": "EPR_Source_Capabilities",
-    "10010": "EPR_Sink_Capabilities",
-    "11110": "Vendor_Defined_Extended",
-}
-
-
-PEAK_CURRENT = {
-    "00":"Not Support",
-    "01": f"1. Peak current equals 150% IoC for 1ms @ 5% duty cycle (low current equals 97% IoC for 19ms)\n"
-          f"2. Peak current equals 125% IoC for 2ms @ 10% duty cycle (low current equals 97% IoC for 18ms)\n"
-          f"3. Peak current equals 110% IoC for 10ms @ 50% duty cycle (low current equals 90% IoC for 10ms)",
-    "10": f"1. Peak current equals 200% IoC for 1ms @ 5% duty cycle (low current equals 95% IoC for 19ms)\n"
-          f"2. Peak current equals 150% IoC for 2ms @ 10% duty cycle (low current equals 94% IoC for 18ms)\n"
-          f"3. Peak current equals 125% IoC for 10ms @ 50% duty cycle (low current equals 75% IoC for 10ms)",
-    "11": f"1. Peak current equals 200% IoC for 1ms @ 5% duty cycle (low current equals 95% IoC for 19ms)\n"
-          f"2. Peak current equals 175% IoC for 2ms @ 10% duty cycle (low current equals 92% IoC for 18ms)\n"
-          f"3. Peak current equals 150% IoC for 10ms @ 50% duty cycle (low current equals 50% IoC for 10ms)"
-}
-
-
-def lst2str(lst: list, order: str='<') -> str:
+def lst2str(lst: list, order: str = '<') -> str:
     if order == '>':
         return ''.join(f'{x:08b}' for x in bytes(lst))
     elif order == '<':
@@ -115,28 +24,28 @@ def lst2str(lst: list, order: str='<') -> str:
 
 
 class metadata:
-    def __init__(self, raw=None, bit_loc=None, field=None, value=None):
+    def __init__(self, raw: str = None, bit_loc: tuple = None, field: str = None, value=None):
         self._raw = raw
         self._bit_loc = bit_loc
         self._field = field
         self._value = value
     
-    def raw(self):
+    def raw(self) -> str:
         return self._raw
     
-    def bit_loc(self):
+    def bit_loc(self) -> tuple:
         return self._bit_loc
     
-    def field(self):
+    def field(self) -> str:
         return self._field
     
     def value(self):
         return self._value
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self._value}"
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self._field}: {self._value}"
     
     def __getitem__(self, field):
@@ -185,6 +94,72 @@ class general_msg(metadata):
 class msg_header(metadata):
     def __init__(self, raw: str, bit_loc: tuple, sop: str):
         super().__init__(raw, bit_loc, "Message Header")
+
+        CMT = {
+            "00001": "GoodCRC",
+            "00010": "GotoMin",
+            "00011": "Accept",
+            "00100": "Reject",
+            "00101": "Ping",
+            "00110": "PS_RDY",
+            "00111": "Get_Source_Cap",
+            "01000": "Get_Sink_Cap",
+            "01001": "DR_Swap",
+            "01010": "PR_Swap",
+            "01011": "VCONN_Swap",
+            "01100": "Wait",
+            "01101": "Soft_Reset",
+            "01110": "Data_Reset",
+            "01111": "Data_Reset_Complete",
+            "10000": "Not_Supported",
+            "10001": "Get_Source_Cap_Extended",
+            "10010": "Get_Status",
+            "10011": "FR_Swap",
+            "10100": "Get_PPS_Status",
+            "10101": "Get_Country_Codes",
+            "10110": "Get_Sink_Cap_Extended",
+            "10111": "Get_Source_Info",
+            "11000": "Get_Revision",
+        }
+
+        DMT = {
+            "00001": "Source_Capabilities",
+            "00010": "Request",
+            "00011": "BIST",
+            "00100": "Sink_Capabilities",
+            "00101": "Battery_Status",
+            "00110": "Alert",
+            "00111": "Get_Country_Info",
+            "01000": "Enter_USB",
+            "01001": "EPR_Request",
+            "01010": "EPR_Mode",
+            "01011": "Source_Info",
+            "01100": "Revision",
+            "01111": "Vendor_Defined",
+        }
+
+        EMT = {
+            "00001": "Source_Capabilities_Extended",
+            "00010": "Status",
+            "00011": "Get_Battery_Cap",
+            "00100": "Get_Battery_Status",
+            "00101": "Battery_Capabilities",
+            "00110": "Get_Manufacturer_Info",
+            "00111": "Manufacturer_Info",
+            "01000": "Security_Request",
+            "01001": "Security_Response",
+            "01010": "Firmware_Update_Request",
+            "01011": "Firmware_Update_Response",
+            "01100": "PPS_Status",
+            "01101": "Country_Info",
+            "01110": "Country_Codes",
+            "01111": "Sink_Capabilities_Extended",
+            "10000": "Extended_Control",
+            "10001": "EPR_Source_Capabilities",
+            "10010": "EPR_Sink_Capabilities",
+            "11110": "Vendor_Defined_Extended",
+        }
+
         self._value = [
             metadata(raw[0:1], (15, 15), "Extended", bool(int(raw[0:1]))),
             metadata(raw[1:4], (14, 12), "Number of Data Objects", int(raw[1:4], 2)),
@@ -198,8 +173,14 @@ class msg_header(metadata):
             self._value.append(metadata(raw[7:8], (8, 8), "Cable Plug",
                                        "DFP or UFP" if raw[7:8] == '0' else "Cable Plug or VPD"))
 
-        self._value.append(metadata(raw[8:10], (7, 6), "Specification Revision",
-                                   REV[raw[8:10]]))
+        if raw[8:10] == "00":
+            self._value.append(metadata(raw[8:10], (7, 6), "Specification Revision", "Rev 1.0"))
+        elif raw[8:10] == "01":
+            self._value.append(metadata(raw[8:10], (7, 6), "Specification Revision", "Rev 2.0"))
+        elif raw[8:10] == "10":
+            self._value.append(metadata(raw[8:10], (7, 6), "Specification Revision", "Rev 3.x"))
+        elif raw[8:10] == "11":
+            self._value.append(metadata(raw[8:10], (7, 6), "Specification Revision", "Reserved"))
 
         if sop == "SOP":
             self._value.append(metadata(raw[10:11], (5, 5), "Port Data Role",
@@ -240,8 +221,61 @@ class ex_msg_header(metadata):
         ]
 
 
+class VDM_header(metadata):
+    def __init__(self, raw: str, bit_loc: tuple, **kwargs):
+        super().__init__(raw, bit_loc, "VDM Header")
+        self._value = []
+
+        if bool(int(raw[16:17])):
+            self._value.append(metadata(raw[0:16], (31, 16), "SVID", f"0x{int(raw[0:16], 2):04X}"))
+            self._value.append(metadata(raw[16:17], (15, 15), "VDM Type", "Structured"))
+
+            if raw[17:21] == "0000":
+                self._value.append(metadata(raw[17:21], (14, 11), "Structured VDM Version", "Version 1.0"))
+            elif raw[17:21] == "0100":
+                self._value.append(metadata(raw[17:21], (14, 11), "Structured VDM Version", "Version 2.0"))
+            elif raw[17:21] == "0101":
+                self._value.append(metadata(raw[17:21], (14, 11), "Structured VDM Version", "Version 2.1"))
+            else:
+                self._value.append(metadata(raw[17:21], (14, 11), "Structured VDM Version", "Reserved"))
+            
+            self._value.append(metadata(raw[21:24], (10, 8), "Object Position", int(raw[21:24], 2)))
+
+            if raw[24:26] == "00":
+                self._value.append(metadata(raw[24:26], (7, 6), "Command Type", "REQ"))
+            elif raw[24:26] == "01":
+                self._value.append(metadata(raw[24:26], (7, 6), "Command Type", "ACK"))
+            elif raw[24:26] == "10":
+                self._value.append(metadata(raw[24:26], (7, 6), "Command Type", "NAK"))
+            elif raw[24:26] == "11":
+                self._value.append(metadata(raw[24:26], (7, 6), "Command Type", "BUSY"))
+
+            self._value.append(metadata(raw[26:27], (5, 5), "Reserved"))
+
+            if int(raw[27:32]) == 1:
+                self._value.append(metadata(raw[27:32], (4, 0), "Command", "Discover Identity"))
+            elif int(raw[27:32]) == 2:
+                self._value.append(metadata(raw[27:32], (4, 0), "Command", "Discover SVIDs"))
+            elif int(raw[27:32]) == 3:
+                self._value.append(metadata(raw[27:32], (4, 0), "Command", "Discover Modes"))
+            elif int(raw[27:32]) == 4:
+                self._value.append(metadata(raw[27:32], (4, 0), "Command", "Enter Mode"))
+            elif int(raw[27:32]) == 5:
+                self._value.append(metadata(raw[27:32], (4, 0), "Command", "Exit Mode"))
+            elif int(raw[27:32]) == 6:
+                self._value.append(metadata(raw[27:32], (4, 0), "Command", "Attention"))
+            elif 7 <= int(raw[27:32]) <= 15:
+                self._value.append(metadata(raw[27:32], (4, 0), "Command", "Reserved"))
+            else:
+                self._value.append(metadata(raw[27:32], (4, 0), "Command", int(raw[27:32], 2)))
+        else:
+            self._value.append(metadata(raw[0:16], (31, 16), "VID", f"0x{int(raw[0:16], 2):04X}"))
+            self._value.append(metadata(raw[16:17], (15, 15), "VDM Type", "Unstructured"))
+            self._value.append(metadata(raw[17:32], (14, 0), "Vendor Defined", f"0x{int(raw[17:32], 2):04X}"))
+
+
 class FPDO(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "FPDO"),
@@ -260,7 +294,7 @@ class FPDO(metadata):
 
 
 class FPDO_S(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "FPDO Sink"),
@@ -294,7 +328,7 @@ class FPDO_S(metadata):
 
 
 class BPDO(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "BPDO"),
@@ -305,7 +339,7 @@ class BPDO(metadata):
 
 
 class BPDO_S(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "BPDO Sink"),
@@ -316,7 +350,7 @@ class BPDO_S(metadata):
 
 
 class VPDO(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "VPDO"),
@@ -327,7 +361,7 @@ class VPDO(metadata):
 
 
 class VPDO_S(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "VPDO Sink"),
@@ -338,7 +372,7 @@ class VPDO_S(metadata):
 
 
 class PPS_PDO(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "APDO"),
@@ -354,7 +388,7 @@ class PPS_PDO(metadata):
 
 
 class PPS_PDO_S(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "APDO Sink"),
@@ -369,7 +403,7 @@ class PPS_PDO_S(metadata):
 
 
 class EPR_AVS_PDO(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "APDO"),
@@ -383,7 +417,7 @@ class EPR_AVS_PDO(metadata):
 
 
 class EPR_AVS_PDO_S(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "APDO Sink"),
@@ -397,7 +431,7 @@ class EPR_AVS_PDO_S(metadata):
 
 
 class SPR_AVS_PDO(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "APDO"),
@@ -410,7 +444,7 @@ class SPR_AVS_PDO(metadata):
 
 
 class SPR_AVS_PDO_S(metadata):
-    def __init__(self, raw, bit_loc, field):
+    def __init__(self, raw: str, bit_loc: tuple, field: str):
         super().__init__(raw, bit_loc, field)
         self._value = [
             metadata(raw[0:2], (31, 30), "Supply Type", "APDO Sink"),
@@ -422,7 +456,7 @@ class SPR_AVS_PDO_S(metadata):
 
 
 class F_VRDO(metadata):
-    def __init__(self, raw, bit_loc, field, **kwargs):
+    def __init__(self, raw: str, bit_loc: tuple, field: str, **kwargs):
         super().__init__(raw, bit_loc, field)
         self._pdo = kwargs["pdo"]
         self._value = [
@@ -443,7 +477,7 @@ class F_VRDO(metadata):
 
 
 class BRDO(metadata):
-    def __init__(self, raw, bit_loc, field, **kwargs):
+    def __init__(self, raw: str, bit_loc: tuple, field: str, **kwargs):
         super().__init__(raw, bit_loc, field)
         self._pdo = kwargs["pdo"]
         self._value = [
@@ -464,7 +498,7 @@ class BRDO(metadata):
 
 
 class PPS_RDO(metadata):
-    def __init__(self, raw, bit_loc, field, **kwargs):
+    def __init__(self, raw: str, bit_loc: tuple, field: str, **kwargs):
         super().__init__(raw, bit_loc, field)
         self._pdo = kwargs["pdo"]
         self._value = [
@@ -486,7 +520,7 @@ class PPS_RDO(metadata):
 
 
 class AVS_RDO(metadata):
-    def __init__(self, raw, bit_loc, field, **kwargs):
+    def __init__(self, raw: str, bit_loc: tuple, field: str, **kwargs):
         super().__init__(raw, bit_loc, field)
         self._pdo = kwargs["pdo"]
         self._value = [
@@ -560,7 +594,7 @@ def rdo_type(pdo: metadata) -> type:
 
 
 class Source_Capabilities(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         num_objs = kwargs["header"][1].value()
@@ -571,7 +605,7 @@ class Source_Capabilities(metadata):
 
 
 class Request(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         pdo_list = kwargs["last_pdo"]["Data Objects"].value()
@@ -581,7 +615,7 @@ class Request(metadata):
 
 
 class BIST(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         num_objs = kwargs["header"][1].value()
@@ -605,11 +639,11 @@ class BIST(metadata):
 
         if num_objs > 1:
             self._value.append(metadata(lst2str(data[4:num_objs*4]), (32, num_objs*32-1), "Test Data",
-                                        f'0x{bytes(data[4:num_objs*4]).hex().upper()}'))
+                                        f'0x{bytes(data[4:num_objs*4][::-1]).hex().upper()}'))
 
 
 class Sink_Capabilities(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         num_objs = kwargs["header"][1].value()
@@ -620,7 +654,7 @@ class Sink_Capabilities(metadata):
 
 
 class Battery_Status(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         BSDO_raw = lst2str(data[0:4])
@@ -654,7 +688,7 @@ class Battery_Status(metadata):
 
 
 class Alert(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         ppr = kwargs["header"][3].value()
@@ -700,7 +734,7 @@ class Alert(metadata):
 
 
 class Get_Country_Info(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         CCDO_raw = lst2str(data[0:4])
@@ -716,7 +750,7 @@ class Get_Country_Info(metadata):
 
 
 class Enter_USB(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         EUDO_raw = lst2str(data[0:4])
@@ -784,7 +818,7 @@ class Enter_USB(metadata):
 
 
 class EPR_Request(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         self._value = []
@@ -796,7 +830,7 @@ class EPR_Request(metadata):
 
 
 class EPR_Mode(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         EPRMDO_raw = lst2str(data[0:4])
@@ -845,7 +879,7 @@ class EPR_Mode(metadata):
 
 
 class Source_Info(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         SIDO_raw = lst2str(data[0:4])
@@ -865,7 +899,7 @@ class Source_Info(metadata):
 
 
 class Revision(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
         RMDO_raw = lst2str(data[0:4])
@@ -880,12 +914,17 @@ class Revision(metadata):
 
 # TODO
 class Vendor_Defined(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        num_objs = kwargs["header"][1].value()
+        self._value = [VDM_header(lst2str(data[0:4]), (0, 31))]
+        for i in range(1, num_objs):
+            self._value.append(metadata(lst2str(data[i*4:(i+1)*4]), (i*32, (i+1)*32-1), f"VDO {i}",
+                                        f"0x{bytes(data[i*4:(i+1)*4]).hex().upper()}"))
 
 
-def provide_ext(msg: metadata):
+def provide_ext(msg: metadata) -> bool:
     if msg["Extended Message Header"] is None:
         return False
     ext_header = msg["Extended Message Header"]
@@ -895,23 +934,24 @@ def provide_ext(msg: metadata):
     return False
 
 
-def need_ext(ext_header: ex_msg_header):
+def need_ext(ext_header: ex_msg_header) -> bool:
     if ext_header["Chunked"].value():
         if ext_header["Chunk Number"].value() > 0:
-            return True
+            if not ext_header["Request Chunk"].value():
+                return True
     return False
 
 
 class Source_Capabilities_Extended(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="SCEDB")
         self._raw = lst2str(data, '>')
         self._value = [
-            metadata(lst2str(data[0:2]), (0, 15), "VID", f"0x{bytes(data[0:2]).hex().upper()}"),
-            metadata(lst2str(data[2:4]), (16, 31), "PID", f"0x{bytes(data[2:4]).hex().upper()}"),
-            metadata(lst2str(data[4:8]), (32, 63), "XID", f"0x{bytes(data[0:2]).hex().upper()}"),
-            metadata(lst2str(data[8:9]), (64, 71), "FW Version", f"0x{bytes(data[8:9]).hex().upper()}"),
-            metadata(lst2str(data[9:10]), (72, 79), "HW Version", f"0x{bytes(data[9:10]).hex().upper()}")
+            metadata(lst2str(data[0:2]), (0, 15), "VID", f"0x{bytes(data[0:2][::-1]).hex().upper()}"),
+            metadata(lst2str(data[2:4]), (16, 31), "PID", f"0x{bytes(data[2:4][::-1]).hex().upper()}"),
+            metadata(lst2str(data[4:8]), (32, 63), "XID", f"0x{bytes(data[0:2][::-1]).hex().upper()}"),
+            metadata(lst2str(data[8:9]), (64, 71), "FW Version", f"0x{bytes(data[8:9][::-1]).hex().upper()}"),
+            metadata(lst2str(data[9:10]), (72, 79), "HW Version", f"0x{bytes(data[9:10][::-1]).hex().upper()}")
         ]
 
         Voltage_Regulation = []
@@ -964,11 +1004,11 @@ class Source_Capabilities_Extended(metadata):
             self._value.append(metadata(PC_raw, ((14+i*2)*8, (16+i*2)*8-1), "Peak Current", Peak_Current))
         
         TT_raw = lst2str(data[20:21])
-        if data[20:21] == [0]:
+        if data[20:21][0] == 0:
             self._value.append(metadata(TT_raw, (160, 167), "Touch Temp", "[IEC 60950-1]"))
-        elif data[20:21] == [1]:
+        elif data[20:21][0] == 1:
             self._value.append(metadata(TT_raw, (160, 167), "Touch Temp", "[IEC 62368-1] TS1"))
-        elif data[20:21] == [2]:
+        elif data[20:21][0] == 2:
             self._value.append(metadata(TT_raw, (160, 167), "Touch Temp", "[IEC 62368-1] TS2"))
         else:
             self._value.append(metadata(TT_raw, (160, 167), "Touch Temp", "Reserved"))
@@ -994,7 +1034,7 @@ class Source_Capabilities_Extended(metadata):
 
 
 class Status(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="SDB")
         self._raw = lst2str(data, '>')
         self._value = []
@@ -1106,98 +1146,456 @@ class Status(metadata):
 
         self._value.append(metadata(PSC_raw, (48, 55), "Power State Change", Power_State_Change))
 
-# TODO
+
 class Get_Battery_Cap(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="GBCDB")
         self._raw = lst2str(data, '>')
+        if 0 <= data[0:1][0] <= 3:
+            self._value = [metadata(lst2str(data[0:1]), (0, 7), "Battery Cap Ref",
+                                    f"Fixed Battery {data[0:1][0]}")]
+        elif 4 <= data[0:1][0] <= 7:
+            self._value = [metadata(lst2str(data[0:1]), (0, 7), "Battery Cap Ref",
+                                    f"Hot Swappable Battery {data[0:1][0]-4}")]
+        else:
+            self._value = [metadata(lst2str(data[0:1]), (0, 7), "Battery Cap Ref", "Reserved")]
 
-# TODO
+
 class Get_Battery_Status(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="GBSDB")
         self._raw = lst2str(data, '>')
+        if 0 <= data[0:1][0] <= 3:
+            self._value = [metadata(lst2str(data[0:1]), (0, 7), "Battery Status Ref",
+                                    f"Fixed Battery {data[0:1][0]}")]
+        elif 4 <= data[0:1][0] <= 7:
+            self._value = [metadata(lst2str(data[0:1]), (0, 7), "Battery Status Ref",
+                                    f"Hot Swappable Battery {data[0:1][0]-4}")]
+        else:
+            self._value = [metadata(lst2str(data[0:1]), (0, 7), "Battery Status Ref", "Reserved")]
 
-# TODO
+
 class Battery_Capabilities(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="BCDB")
         self._raw = lst2str(data, '>')
+        self._value = [
+            metadata(lst2str(data[0:2]), (0, 15), "VID", f"0x{bytes(data[0:2][::-1]).hex().upper()}"),
+            metadata(lst2str(data[2:4]), (16, 31), "PID", f"0x{bytes(data[2:4][::-1]).hex().upper()}")
+        ]
 
-# TODO
+        if lst2str(data[4:6]) == "0" * 16:
+            self._value.append(metadata(lst2str(data[4:6]), (32, 47), "Battery Design Capacity",
+                                        "Battery Not Present"))
+        elif lst2str(data[4:6]) == "1" * 16:
+            self._value.append(metadata(lst2str(data[4:6]), (32, 47), "Battery Design Capacity",
+                                        "Design Capacity Unknown"))
+        else:
+            self._value.append(metadata(lst2str(data[4:6]), (32, 47), "Battery Design Capacity",
+                                        f"{int.from_bytes(data[4:6], 'little') / 10}WH"))
+            
+        if lst2str(data[6:8]) == "0" * 16:
+            self._value.append(metadata(lst2str(data[6:8]), (48, 63), "Battery Last Full Charge Capacity",
+                                        "Battery Not Present"))
+        elif lst2str(data[6:8]) == "1" * 16:
+            self._value.append(metadata(lst2str(data[6:8]), (48, 63), "Battery Last Full Charge Capacity",
+                                        "Battery Last Full Charge Capacity Unknown"))
+        else:
+            self._value.append(metadata(lst2str(data[6:8]), (48, 63), "Battery Last Full Charge Capacity",
+                                        f"{int.from_bytes(data[6:8], 'little') / 10}WH"))
+        
+        self._value.append(metadata(lst2str(data[8:9]), (64, 71), "Battery Type", [
+            metadata(lst2str(data[8:9])[7:8], (0, 0), "Invalid Battery Reference", bool(int(lst2str(data[8:9])[7:8]))),
+            metadata(lst2str(data[8:9])[0:7], (7, 1), "Reserved")
+        ]))
+
+
 class Get_Manufacturer_Info(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="GMIDB")
         self._raw = lst2str(data, '>')
+        self._value = []
 
-# TODO
+        if data[0:1][0] == 0:
+            self._value.append(metadata(lst2str(data[0:1]), (0, 7), "Manufacturer Info Target", "Port/Cable Plug"))
+        elif data[0:1][0] == 1:
+            self._value.append(metadata(lst2str(data[0:1]), (0, 7), "Manufacturer Info Target", "Battery"))
+        else:
+            self._value.append(metadata(lst2str(data[0:1]), (0, 7), "Manufacturer Info Target", "Reserved"))
+        
+        if data[0:1][0] == 1:
+            if 0 <= data[1:2][0] <= 3:
+                self._value.append(metadata(lst2str(data[1:2]), (8, 15), "Manufacturer Info Ref",
+                                            f"Fixed Battery {data[1:2][0]}"))
+            elif 4 <= data[1:2][0] <= 7:
+                self._value.append(metadata(lst2str(data[1:2]), (8, 15), "Manufacturer Info Ref",
+                                            f"Hot Swappable Battery {data[1:2][0]-4}"))
+            else:
+                self._value.append(metadata(lst2str(data[1:2]), (8, 15), "Manufacturer Info Ref", "Reserved"))
+        else:
+            self._value.append(metadata(lst2str(data[1:2]), (8, 15), "Manufacturer Info Ref", "Reserved"))
+
+
 class Manufacturer_Info(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="MIDB")
         self._raw = lst2str(data, '>')
+        data_size = kwargs["ex_header"]["Data Size"].value()
+        self._value = [
+            metadata(lst2str(data[0:2]), (0, 15), "VID", f"0x{bytes(data[0:2][::-1]).hex().upper()}"),
+            metadata(lst2str(data[2:4]), (16, 31), "PID", f"0x{bytes(data[2:4][::-1]).hex().upper()}"),
+            metadata(lst2str(data[4:data_size]), (32, data_size*8-1), "Manufacturer String",
+                     bytes(data[4:data_size]).decode("ascii"))
+        ]
 
-# TODO
+
 class Security_Request(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="SRQDB")
         self._raw = lst2str(data, '>')
+        ex_header = kwargs["ex_header"]
+        if ex_header["Request Chunk"].value():
+            self._full_raw = self._raw
+            self._full_value = None
+            return
+        
+        last_ext = kwargs["last_ext"]
+        data_size = ex_header["Data Size"].value()
 
-# TODO
+        if need_ext(ex_header):
+            self._full_data = last_ext["SRQDB"]._get_full_data() + data
+        else:
+            self._full_data = data
+        
+        self._full_raw = lst2str(self._full_data, '>')
+        self._value = "Incomplete Data"
+
+        if len(self._full_data) < data_size:
+            self._full_value = "Incomplete Data"
+            return
+        
+        self._full_value = f"0x{bytes(self._full_data[0:data_size]).hex().upper()}"
+
+    def _get_full_data(self) -> list:
+        return self._full_data
+
+    def full_raw(self) -> str:
+        return self._full_raw
+
+    def full_value(self) -> list:
+        return self._full_value
+    
+    def __str__(self) -> str:
+        return f"{self._full_value}"
+    
+    def __repr__(self) -> str:
+        return f"{self._field}: {self._full_value}"
+
+
 class Security_Response(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="SRPDB")
         self._raw = lst2str(data, '>')
+        ex_header = kwargs["ex_header"]
+        if ex_header["Request Chunk"].value():
+            self._full_raw = self._raw
+            self._full_value = None
+            return
+        
+        last_ext = kwargs["last_ext"]
+        data_size = ex_header["Data Size"].value()
 
-# TODO
+        if need_ext(ex_header):
+            self._full_data = last_ext["SRPDB"]._get_full_data() + data
+        else:
+            self._full_data = data
+        
+        self._full_raw = lst2str(self._full_data, '>')
+        self._value = "Incomplete Data"
+
+        if len(self._full_data) < data_size:
+            self._full_value = "Incomplete Data"
+            return
+        
+        self._full_value = f"0x{bytes(self._full_data[0:data_size]).hex().upper()}"
+
+    def _get_full_data(self) -> list:
+        return self._full_data
+
+    def full_raw(self) -> str:
+        return self._full_raw
+
+    def full_value(self) -> list:
+        return self._full_value
+    
+    def __str__(self) -> str:
+        return f"{self._full_value}"
+    
+    def __repr__(self) -> str:
+        return f"{self._field}: {self._full_value}"
+
+
 class Firmware_Update_Request(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="FRQDB")
         self._raw = lst2str(data, '>')
+        ex_header = kwargs["ex_header"]
+        if ex_header["Request Chunk"].value():
+            self._full_raw = self._raw
+            self._full_value = None
+            return
+        
+        last_ext = kwargs["last_ext"]
+        data_size = ex_header["Data Size"].value()
 
-# TODO
+        if need_ext(ex_header):
+            self._full_data = last_ext["FRQDB"]._get_full_data() + data
+        else:
+            self._full_data = data
+        
+        self._full_raw = lst2str(self._full_data, '>')
+        self._value = "Incomplete Data"
+
+        if len(self._full_data) < data_size:
+            self._full_value = "Incomplete Data"
+            return
+        
+        self._full_value = f"0x{bytes(self._full_data[0:data_size]).hex().upper()}"
+
+    def _get_full_data(self) -> list:
+        return self._full_data
+
+    def full_raw(self) -> str:
+        return self._full_raw
+
+    def full_value(self) -> list:
+        return self._full_value
+    
+    def __str__(self) -> str:
+        return f"{self._full_value}"
+    
+    def __repr__(self) -> str:
+        return f"{self._field}: {self._full_value}"
+
+
 class Firmware_Update_Response(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="FRPDB")
         self._raw = lst2str(data, '>')
+        ex_header = kwargs["ex_header"]
+        if ex_header["Request Chunk"].value():
+            self._full_raw = self._raw
+            self._full_value = None
+            return
+        
+        last_ext = kwargs["last_ext"]
+        data_size = ex_header["Data Size"].value()
 
-# TODO
+        if need_ext(ex_header):
+            self._full_data = last_ext["FRPDB"]._get_full_data() + data
+        else:
+            self._full_data = data
+        
+        self._full_raw = lst2str(self._full_data, '>')
+        self._value = "Incomplete Data"
+
+        if len(self._full_data) < data_size:
+            self._full_value = "Incomplete Data"
+            return
+        
+        self._full_value = f"0x{bytes(self._full_data[0:data_size]).hex().upper()}"
+
+    def _get_full_data(self) -> list:
+        return self._full_data
+
+    def full_raw(self) -> str:
+        return self._full_raw
+
+    def full_value(self) -> list:
+        return self._full_value
+    
+    def __str__(self) -> str:
+        return f"{self._full_value}"
+    
+    def __repr__(self) -> str:
+        return f"{self._field}: {self._full_value}"
+
+
 class PPS_Status(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="PPSSDB")
         self._raw = lst2str(data, '>')
+        self._value = []
 
-# TODO
+        if lst2str(data[0:2]) == "1" * 16:
+            self._value.append(metadata(lst2str(data[0:2]), (0, 15), "Output Voltage", "Not Support"))
+        else:
+            self._value.append(metadata(lst2str(data[0:2]), (0, 15), "Output Voltage",
+                                        f"{int(lst2str(data[0:2]), 2) / 50}mV"))
+        
+        if lst2str(data[2:3]) == "1" * 8:
+            self._value.append(metadata(lst2str(data[2:3]), (16, 23), "Output Current", "Not Support"))
+        else:
+            self._value.append(metadata(lst2str(data[2:3]), (16, 23), "Output Current",
+                                        f"{int(lst2str(data[2:3]), 2) / 20}mA"))
+        
+        Real_Time_Flags = []
+        RTF_raw = lst2str(data[3:4])
+
+        Real_Time_Flags.append(metadata(RTF_raw[7:8], (0, 0), "Reserved"))
+
+        if RTF_raw[5:7] == "00":
+            Real_Time_Flags.append(metadata(RTF_raw[5:7], (2, 1), "PTF", "Not Support"))
+        elif RTF_raw[5:7] == "01":
+            Real_Time_Flags.append(metadata(RTF_raw[5:7], (2, 1), "PTF", "Normal"))
+        elif RTF_raw[5:7] == "10":
+            Real_Time_Flags.append(metadata(RTF_raw[5:7], (2, 1), "PTF", "Warning"))
+        elif RTF_raw[5:7] == "11":
+            Real_Time_Flags.append(metadata(RTF_raw[5:7], (2, 1), "PTF", "Over Temperature"))
+        
+        Real_Time_Flags.append(metadata(RTF_raw[4:5], (3, 3), "OMF", bool(int(RTF_raw[4:5]))))
+        Real_Time_Flags.append(metadata(RTF_raw[0:4], (7, 4), "Reserved"))
+
+
 class Country_Info(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="CIDB")
         self._raw = lst2str(data, '>')
+        data_size = kwargs["ex_header"]["Data Size"].value()
+        self._value = [
+            metadata(lst2str(data[0:2]), (0, 15), "Country Code", bytes(data[0:2]).decode("ascii")),
+            metadata(lst2str(data[2:4]), (16, 31), "Reserved"),
+            metadata(lst2str(data[4:data_size]), (32, data_size*8-1), "Country Specific Data",
+                     bytes(data[4:data_size]).decode("ascii"))
+        ]
 
-# TODO
+
 class Country_Codes(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="CCDB")
         self._raw = lst2str(data, '>')
+        data_size = kwargs["ex_header"]["Data Size"].value()
+        self._value = [
+            metadata(lst2str(data[0:1]), (0, 7), "Length", data[0:1][0]),
+            metadata(lst2str(data[1:2]), (8, 15), "Reserved")
+        ]
 
-# TODO
+        for i in range(1, data_size/2):
+            metadata(lst2str(data[i*2:(i+1)*2], (i*16, (i+1)*16-1)), f"Country Code {i}",
+                     bytes(data[i*2:(i+1)*2]).decode("ascii"))
+
+
 class Sink_Capabilities_Extended(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="SKEDB")
+        self._raw = lst2str(data, '>')
+        self._value = [
+            metadata(lst2str(data[0:2]), (0, 15), "VID", f"0x{bytes(data[0:2][::-1]).hex().upper()}"),
+            metadata(lst2str(data[2:4]), (16, 31), "PID", f"0x{bytes(data[2:4][::-1]).hex().upper()}"),
+            metadata(lst2str(data[4:8]), (32, 63), "XID", f"0x{bytes(data[0:2][::-1]).hex().upper()}"),
+            metadata(lst2str(data[8:9]), (64, 71), "FW Version", f"0x{bytes(data[8:9][::-1]).hex().upper()}"),
+            metadata(lst2str(data[9:10]), (72, 79), "HW Version", f"0x{bytes(data[9:10][::-1]).hex().upper()}"),
+            metadata(lst2str(data[10:11]), (80, 87), "SKEDB Version",
+                     "Version 1.0" if data[10:11][0] == 1 else "Reserved")
+        ]
+
+        LS_raw = lst2str(data[11:12])
+        if LS_raw[6:8] == "00":
+            self._value.append(metadata(LS_raw, (88, 95), "Load Step", "150mA/μs"))
+        elif LS_raw[6:8] == "01":
+            self._value.append(metadata(LS_raw, (88, 95), "Load Step", "500mA/μs"))
+        else:
+            self._value.append(metadata(LS_raw, (88, 95), "Load Step", "Reserved"))
+
+        SLC_raw = lst2str(data[12:14])
+        Sink_Load_Characteristics = [
+            metadata(SLC_raw[11:16], (4, 0), "Percent overload", f"{min(25, int(SLC_raw[11:16], 2)) * 10}%"),
+            metadata(SLC_raw[5:11], (10, 5), "Overload period", f"{int(SLC_raw[5:11], 2) * 20}ms"),
+            metadata(SLC_raw[1:5], (14, 11), "Duty cycle", f"{int(SLC_raw[1:5], 2) * 5}%"),
+            metadata(SLC_raw[0:1], (15, 15), "VBUS Droop", bool(int(SLC_raw[0:1])))
+        ]
+        self._value.append(metadata(SLC_raw, (96, 111), "Sink Load Characteristics", Sink_Load_Characteristics))
+
+        Compliance_raw = lst2str(data[14:15])
+        Compliance = [
+            metadata(Compliance_raw[7:8], (0, 0), "Requires LPS Source", bool(int(Compliance_raw[7:8]))),
+            metadata(Compliance_raw[6:7], (1, 1), "Requires PS1 Source", bool(int(Compliance_raw[6:7]))),
+            metadata(Compliance_raw[5:6], (2, 2), "Requires PS2 Source", bool(int(Compliance_raw[5:6]))),
+            metadata(Compliance_raw[0:5], (7, 3), "Reserved")
+        ]
+        self._value.append(metadata(Compliance_raw, (112, 119), "Compliance", Compliance))
+
+        TT_raw = lst2str(data[15:16])
+        if data[20:21][0] == 0:
+            self._value.append(metadata(TT_raw, (120, 127), "Touch Temp", "Not Applicable"))
+        elif data[20:21][0] == 1:
+            self._value.append(metadata(TT_raw, (120, 127), "Touch Temp", "[IEC 60950-1]"))
+        elif data[20:21][0] == 2:
+            self._value.append(metadata(TT_raw, (120, 127), "Touch Temp", "[IEC 62368-1] TS1"))
+        elif data[20:21][0] == 3:
+            self._value.append(metadata(TT_raw, (120, 127), "Touch Temp", "[IEC 62368-1] TS2"))
+        else:
+            self._value.append(metadata(TT_raw, (120, 127), "Touch Temp", "Reserved"))
+
+        BF_raw = lst2str(data[16:17])
+        Battery_Info = [
+            metadata(BF_raw[0:4], (7, 4), "Hot Swappable Battery", BF_raw[0:4]),
+            metadata(BF_raw[4:8], (3, 0), "Fixed Batteries", BF_raw[4:8])
+        ]
+        self._value.append(metadata(BF_raw, (128, 135), "Battery Info", Battery_Info))
+
+        SM_raw = lst2str(data[17:18])
+        Sink_Modes = [
+            metadata(SM_raw[7:8], (0, 0), "PPS charging supported", bool(int(SM_raw[7:8]))),
+            metadata(SM_raw[6:7], (1, 1), "VBUS powered", bool(int(SM_raw[6:7]))),
+            metadata(SM_raw[5:6], (2, 2), "AC Supply powered", bool(int(SM_raw[5:6]))),
+            metadata(SM_raw[4:5], (3, 3), "Battery powered", bool(int(SM_raw[4:5]))),
+            metadata(SM_raw[3:4], (4, 4), "Battery essentially unlimited", bool(int(SM_raw[3:4]))),
+            metadata(SM_raw[2:3], (5, 5), "AVS Support", bool(int(SM_raw[2:3]))),
+            metadata(SM_raw[0:2], (7, 6), "Reserved")
+        ]
+        self._value.append(metadata(SM_raw, (136, 143), "Sink Modes", Sink_Modes))
+
+        self._value.append(metadata(lst2str(data[18:19]), (144, 151), "SPR Sink Minimum PDP",
+                           f"{int(lst2str(data[18:19])[1:8], 2)}W"))
+        self._value.append(metadata(lst2str(data[19:20]), (152, 159), "SPR Sink Operational PDP",
+                           f"{int(lst2str(data[19:20])[1:8], 2)}W"))
+        self._value.append(metadata(lst2str(data[20:21]), (160, 167), "SPR Sink Maximum PDP",
+                           f"{int(lst2str(data[20:21])[1:8], 2)}W"))
+        self._value.append(metadata(lst2str(data[21:22]), (168, 175), "EPR Sink Minimum PDP",
+                           f"{int(lst2str(data[21:22]), 2)}W"))
+        self._value.append(metadata(lst2str(data[22:23]), (176, 183), "EPR Sink Operational PDP",
+                           f"{int(lst2str(data[22:23]), 2)}W"))
+        self._value.append(metadata(lst2str(data[23:24]), (184, 191), "EPR Sink Maximum PDP",
+                           f"{int(lst2str(data[23:24]), 2)}W"))
+
+
+class Extended_Control(metadata):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
+        super().__init__(bit_loc=bit_loc, field="ECDB")
         self._raw = lst2str(data, '>')
 
-# TODO
-class Extended_Control(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
-        super().__init__(bit_loc=bit_loc, field="Data Block")
-        self._raw = lst2str(data, '>')
+        EPR_Type = {
+            1: "EPR_Get_Source_Cap",
+            2: "EPR_Get_Sink_Cap",
+            3: "EPR_KeepAlive",
+            4: "EPR_KeepAlive_Ack"
+        }
+
+        self._value = [
+            metadata(lst2str(data[0:1]), (0, 7), "Type", EPR_Type.get(data[0:1][0], "Reserved")),
+            metadata(lst2str(data[1:2]), (8, 15), "Data", f"0x{bytes(data[1:2]).hex().upper()}")
+        ]
 
 
 class EPR_Source_Capabilities(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Block")
         self._raw = lst2str(data, '>')
         num_objs = kwargs["header"][1].value()
         ex_header = kwargs["ex_header"]
         if ex_header["Request Chunk"].value():
+            self._full_raw = self._raw
             self._full_value = None
             return
         
@@ -1242,13 +1640,13 @@ class EPR_Source_Capabilities(metadata):
     def full_value(self) -> list:
         return self._full_value
     
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self._full_value}"
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self._field}: {self._full_value}"
 
-    def __getitem__(self, field) -> metadata:
+    def __getitem__(self, field):
         if self._full_value == "Incomplete Data":
             return None
         if isinstance(field, str):
@@ -1257,31 +1655,146 @@ class EPR_Source_Capabilities(metadata):
             return self._full_value[field]
 
 
-# TODO
 class EPR_Sink_Capabilities(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Block")
         self._raw = lst2str(data, '>')
+        num_objs = kwargs["header"][1].value()
+        ex_header = kwargs["ex_header"]
+        if ex_header["Request Chunk"].value():
+            self._full_raw = self._raw
+            self._full_value = None
+            return
+        
+        last_ext = kwargs["last_ext"]
+        data_size = ex_header["Data Size"].value()
+
+        if need_ext(ex_header):
+            self._full_data = last_ext["Data Block"]._get_full_data() + data
+            self._full_num_objs = last_ext["Data Block"]._get_full_num_objs() + num_objs - 0.5
+        else:
+            self._full_data = data
+            self._full_num_objs = num_objs - 0.5
+        
+        self._full_raw = lst2str(self._full_data, '>')
+        self._value = "Incomplete Data"
+
+        if len(self._full_data) < data_size:
+            self._full_value = "Incomplete Data"
+            return
+        
+        self._full_value = []
+        for i in range(int(self._full_num_objs)):
+            sub_raw = lst2str(self._full_data[i*4:(i+1)*4])
+            if sub_raw == "0" * 32:
+                self._full_value.append(metadata(sub_raw, (i*32, (i+1)*32-1), f"PDO {i+1}", "Empty PDO"))
+            else:
+                self._full_value.append(sink_pdo_type(sub_raw)(sub_raw, (i*32, (i+1)*32-1), f"PDO {i+1}"))
+
+        self._field_map = {m.field(): m for m in self._full_value}
+        if "Reserved" in self._field_map:
+            del self._field_map["Reserved"]
+
+    def _get_full_data(self) -> list:
+        return self._full_data
+
+    def _get_full_num_objs(self) -> float:
+        return self._full_num_objs
+
+    def full_raw(self) -> str:
+        return self._full_raw
+
+    def full_value(self) -> list:
+        return self._full_value
+    
+    def __str__(self) -> str:
+        return f"{self._full_value}"
+    
+    def __repr__(self) -> str:
+        return f"{self._field}: {self._full_value}"
+
+    def __getitem__(self, field):
+        if self._full_value == "Incomplete Data":
+            return None
+        if isinstance(field, str):
+            return self._field_map.get(field, None)
+        else:
+            return self._full_value[field]
 
 # TODO
 class Vendor_Defined_Extended(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Block")
         self._raw = lst2str(data, '>')
+        ex_header = kwargs["ex_header"]
+        if ex_header["Request Chunk"].value():
+            self._full_raw = self._raw
+            self._full_value = None
+            return
+        
+        last_ext = kwargs["last_ext"]
+        data_size = ex_header["Data Size"].value()
+
+        if need_ext(ex_header):
+            self._full_data = last_ext["Data Block"]._get_full_data() + data
+        else:
+            self._full_data = data
+        
+        self._full_raw = lst2str(self._full_data, '>')
+        self._value = "Incomplete Data"
+
+        if len(self._full_data) < data_size:
+            self._full_value = "Incomplete Data"
+            return
+        
+        self._full_value = [
+            VDM_header(lst2str(self._full_data[0:4]), (0, 31)),
+            metadata(lst2str(self._full_data[4:data_size]), (32, data_size*8-1), "VDEDB",
+                     f"0x{bytes(self._full_data[4:data_size]).hex().upper()}")
+        ]
+
+    def _get_full_data(self) -> list:
+        return self._full_data
+
+    def full_raw(self) -> str:
+        return self._full_raw
+
+    def full_value(self) -> list:
+        return self._full_value
+    
+    def __str__(self) -> str:
+        return f"{self._full_value}"
+    
+    def __repr__(self) -> str:
+        return f"{self._field}: {self._full_value}"
 
 
 class Reserved(metadata):
-    def __init__(self, data, bit_loc, **kwargs):
+    def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Block")
         self._raw = lst2str(data, '>')
+        self._value = f"0x{bytes(data).hex().upper()}"
 
 
 class pd_msg(metadata):
-    def __init__(self, data: list, last_pdo: metadata=None, last_ext: metadata=None, last_rdo: metadata=None):
+    def __init__(self,
+                 data: list,
+                 last_pdo: metadata = None,
+                 last_ext: metadata = None,
+                 last_rdo: metadata = None):
         super().__init__(field="pd")
         end_of_msg = data[1] + 2
         self._raw = lst2str(data[0:end_of_msg], '>')
         self._bit_loc = (0, (end_of_msg) * 8 - 1)
+
+        SOP = {
+            224: "SOP",
+            192: "SOP'",
+            160: "SOP''",
+            128: "SOP'_DEBUG",
+            96: "SOP''_DEBUG",
+        }
+
         try:
             self._value = [
                 metadata(lst2str(data[1:2]), (8, 15), "Length", data[1:2][0]),
@@ -1308,13 +1821,14 @@ class pd_msg(metadata):
                                                                                     sop=SOP[data[2:3][0]],
                                                                                     header=self._value[2],
                                                                                     last_pdo=last_pdo))
-        except Exception:
+        except Exception as e:
             self._value = [
                 metadata(lst2str(data[1:2]), (8, 15), "Length", data[1]),
                 metadata(lst2str(data[2:3]), (16, 23), "SOP*", SOP[data[2]]),
                 metadata(lst2str(data[3:data[1] + 2]), (24, (end_of_msg) * 8 - 1), "Error Data",
                          f"0x{bytes(data[0:end_of_msg]).hex().upper()}")
             ]
+            raise(e)
 
 
 class WITRN_DEV:
@@ -1345,7 +1859,11 @@ class WITRN_DEV:
                 raise ValueError("Data length is less than expected (64 bytes)")
             return general_msg(data)
 
-    def pd_unpack(self, data: list = None, last_pdo: metadata=None, last_ext: metadata=None, last_rdo: metadata=None) -> metadata:
+    def pd_unpack(self,
+                  data: list = None,
+                  last_pdo: metadata = None,
+                  last_ext: metadata = None,
+                  last_rdo: metadata = None) -> metadata:
         if data is None:
             if self.data is None:
                 raise ValueError("No data available to unpack")
@@ -1366,7 +1884,11 @@ class WITRN_DEV:
                 raise ValueError("Data length is less than expected (64 bytes)")
             return pd_msg(data, last_pdo, last_ext, last_rdo)
         
-    def auto_unpack(self, data: list = None, last_pdo: metadata=None, last_ext: metadata=None, last_rdo: metadata=None) -> metadata:
+    def auto_unpack(self,
+                    data: list = None,
+                    last_pdo: metadata = None,
+                    last_ext: metadata = None,
+                    last_rdo: metadata = None) -> metadata:
         if data is None:
             if self.data is None:
                 raise ValueError("No data available to unpack")
@@ -1388,11 +1910,4 @@ class WITRN_DEV:
     def close(self):
         self.dev.close()
 
-
-if __name__ == "__main__":
-    k2 = WITRN_DEV()
-    while True:
-        k2.read_data()
-        _, pkg = k2.auto_unpack()
-        if pkg.field() == "pd":
-            print(pkg)
+# End of File
