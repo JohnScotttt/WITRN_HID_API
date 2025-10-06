@@ -1,6 +1,6 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.1 debug
+# Version pre 0.1
 
 import hid
 import struct
@@ -8,6 +8,7 @@ import time
 from datetime import timedelta
 
 __version__ = "pre 0.1"
+__flag__ = False
 
 
 K2_TARGET_VID = 0x0716
@@ -1828,11 +1829,13 @@ class pd_msg(metadata):
                 metadata(lst2str(data[3:data[1] + 2]), (24, (end_of_msg) * 8 - 1), "Error Data",
                          f"0x{bytes(data[0:end_of_msg]).hex().upper()}")
             ]
-            raise(e)
+            if __flag__:
+                raise(e)
 
 
 class WITRN_DEV:
-    def __init__(self, vid=K2_TARGET_VID, pid=K2_TARGET_PID):
+    def __init__(self, vid=K2_TARGET_VID, pid=K2_TARGET_PID, debug=False):
+        __flag__ = debug
         self.data = None
         self.timestamp = None
         self.last_pdo = None
