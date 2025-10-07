@@ -1,6 +1,6 @@
 # 基于Python的WITRN HID通用API
 
-![version](https://img.shields.io/badge/Version-pre 0.1-green)
+![version](https://img.shields.io/badge/Version-0.1-green)
 
 ## 项目介绍
 
@@ -14,14 +14,20 @@
 
 ## 使用
 
-从GitHub下载源文件解压，或是git clone
+推荐通过PyPI安装，仅需要在需要的环境中
+
+```cmd
+pip install witrnhid
+```
+
+或从GitHub下载源文件解压，或是git clone
 
 ```cmd
 cd WITRN_HID_API
 pip install .
 ```
 
-本项目会自动安装成Python库，在您的项目中导入
+本项目会自动安装成，在您的项目中导入
 
 ```python
 import witrnhid
