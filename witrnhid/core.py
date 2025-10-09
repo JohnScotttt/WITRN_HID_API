@@ -1282,8 +1282,11 @@ class Security_Request(metadata):
 
     def full_raw(self) -> str:
         return self._full_raw
+    
+    def raw_value(self) -> list:
+        return self._value
 
-    def full_value(self) -> list:
+    def value(self) -> list:
         return self._full_value
     
     def __str__(self) -> str:
@@ -1291,6 +1294,14 @@ class Security_Request(metadata):
     
     def __repr__(self) -> str:
         return f"{self._field}: {self._full_value}"
+
+    def __getitem__(self, field):
+        if self._full_value == "Incomplete Data":
+            return None
+        if isinstance(field, str):
+            return self._field_map.get(field, None)
+        else:
+            return self._full_value[field]
 
 
 class Security_Response(metadata):
@@ -1326,7 +1337,10 @@ class Security_Response(metadata):
     def full_raw(self) -> str:
         return self._full_raw
 
-    def full_value(self) -> list:
+    def raw_value(self) -> list:
+        return self._value
+
+    def value(self) -> list:
         return self._full_value
     
     def __str__(self) -> str:
@@ -1334,6 +1348,14 @@ class Security_Response(metadata):
     
     def __repr__(self) -> str:
         return f"{self._field}: {self._full_value}"
+
+    def __getitem__(self, field):
+        if self._full_value == "Incomplete Data":
+            return None
+        if isinstance(field, str):
+            return self._field_map.get(field, None)
+        else:
+            return self._full_value[field]
 
 
 class Firmware_Update_Request(metadata):
@@ -1369,7 +1391,10 @@ class Firmware_Update_Request(metadata):
     def full_raw(self) -> str:
         return self._full_raw
 
-    def full_value(self) -> list:
+    def raw_value(self) -> list:
+        return self._value
+
+    def value(self) -> list:
         return self._full_value
     
     def __str__(self) -> str:
@@ -1377,6 +1402,14 @@ class Firmware_Update_Request(metadata):
     
     def __repr__(self) -> str:
         return f"{self._field}: {self._full_value}"
+
+    def __getitem__(self, field):
+        if self._full_value == "Incomplete Data":
+            return None
+        if isinstance(field, str):
+            return self._field_map.get(field, None)
+        else:
+            return self._full_value[field]
 
 
 class Firmware_Update_Response(metadata):
@@ -1412,7 +1445,10 @@ class Firmware_Update_Response(metadata):
     def full_raw(self) -> str:
         return self._full_raw
 
-    def full_value(self) -> list:
+    def raw_value(self) -> list:
+        return self._value
+
+    def value(self) -> list:
         return self._full_value
     
     def __str__(self) -> str:
@@ -1420,6 +1456,14 @@ class Firmware_Update_Response(metadata):
     
     def __repr__(self) -> str:
         return f"{self._field}: {self._full_value}"
+
+    def __getitem__(self, field):
+        if self._full_value == "Incomplete Data":
+            return None
+        if isinstance(field, str):
+            return self._field_map.get(field, None)
+        else:
+            return self._full_value[field]
 
 
 class PPS_Status(metadata):
@@ -1638,7 +1682,10 @@ class EPR_Source_Capabilities(metadata):
     def full_raw(self) -> str:
         return self._full_raw
 
-    def full_value(self) -> list:
+    def raw_value(self) -> list:
+        return self._value
+
+    def value(self) -> list:
         return self._full_value
     
     def __str__(self) -> str:
@@ -1705,7 +1752,10 @@ class EPR_Sink_Capabilities(metadata):
     def full_raw(self) -> str:
         return self._full_raw
 
-    def full_value(self) -> list:
+    def raw_value(self) -> list:
+        return self._value
+
+    def value(self) -> list:
         return self._full_value
     
     def __str__(self) -> str:
@@ -1760,7 +1810,10 @@ class Vendor_Defined_Extended(metadata):
     def full_raw(self) -> str:
         return self._full_raw
 
-    def full_value(self) -> list:
+    def raw_value(self) -> list:
+        return self._value
+
+    def value(self) -> list:
         return self._full_value
     
     def __str__(self) -> str:
@@ -1768,6 +1821,14 @@ class Vendor_Defined_Extended(metadata):
     
     def __repr__(self) -> str:
         return f"{self._field}: {self._full_value}"
+
+    def __getitem__(self, field):
+        if self._full_value == "Incomplete Data":
+            return None
+        if isinstance(field, str):
+            return self._field_map.get(field, None)
+        else:
+            return self._full_value[field]
 
 
 class Reserved(metadata):

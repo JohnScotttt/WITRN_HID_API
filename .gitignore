@@ -6,3 +6,6 @@
 /WITRN_hid.h
 *.exe
 *.csv
+__pycache__
+dist
+witrnhid.egg-info
