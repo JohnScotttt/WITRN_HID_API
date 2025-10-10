@@ -1,13 +1,13 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.1
+# Version pre 0.1.2
 
 import hid
 import struct
 import time
 from datetime import timedelta
 
-__version__ = "pre 0.1"
+__version__ = "pre 0.1.2"
 __flag__ = False
 
 
@@ -169,10 +169,13 @@ class msg_header(metadata):
 
         if sop == "SOP":
             self._value.append(metadata(raw[7:8], (8, 8), "Port Power Role",
-                                       "Sink" if raw[7:8] == '0' else "Source"))
+                                        "Sink" if raw[7:8] == '0' else "Source"))
         elif sop in ["SOP'", "SOP''"]:
             self._value.append(metadata(raw[7:8], (8, 8), "Cable Plug",
-                                       "DFP or UFP" if raw[7:8] == '0' else "Cable Plug or VPD"))
+                                        "DFP or UFP" if raw[7:8] == '0' else "Cable Plug or VPD"))
+        else:
+            self._value.append(metadata(raw[7:8], (8, 8), "Cable Plug",
+                                        "DFP or UFP (D)" if raw[7:8] == '0' else "Cable Plug or VPD (D)"))
 
         if raw[8:10] == "00":
             self._value.append(metadata(raw[8:10], (7, 6), "Specification Revision", "Rev 1.0"))
@@ -185,20 +188,20 @@ class msg_header(metadata):
 
         if sop == "SOP":
             self._value.append(metadata(raw[10:11], (5, 5), "Port Data Role",
-                                       "UFP" if raw[10:11] == '0' else "DFP"))
-        elif sop in ["SOP'", "SOP''"]:
+                                        "UFP" if raw[10:11] == '0' else "DFP"))
+        else:
             self._value.append(metadata(raw[10:11], (5, 5), "Reserved"))
         
         if self._value[0].value():
             self._value.append(metadata(raw[11:16], (4, 0), "Message Type",
-                                       EMT.get(raw[11:16], "Reserved")))
+                                        EMT.get(raw[11:16], "Reserved")))
         else:
             if self._value[1].value() == 0:
                 self._value.append(metadata(raw[11:16], (4, 0), "Message Type",
-                                           CMT.get(raw[11:16], "Reserved")))
+                                            CMT.get(raw[11:16], "Reserved")))
             else:
                 self._value.append(metadata(raw[11:16], (4, 0), "Message Type",
-                                           DMT.get(raw[11:16], "Reserved")))
+                                            DMT.get(raw[11:16], "Reserved")))
 
 
 def is_pdo(msg: metadata) -> bool:
