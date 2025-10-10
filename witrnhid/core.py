@@ -1,13 +1,13 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.1.2
+# Version pre 0.1.3
 
 import hid
 import struct
 import time
 from datetime import timedelta
 
-__version__ = "pre 0.1.2"
+__version__ = "pre 0.1.3"
 __flag__ = False
 
 
@@ -974,10 +974,10 @@ class Source_Capabilities_Extended(metadata):
 
         self._value.append(metadata(VR_raw, (80, 87), "Voltage Regulation", Voltage_Regulation))
         
-        if data[11:12] == [0]:
-            self._value(metadata(lst2str(data[11:12]), (88, 95), "Holdup Time", "Not Supported"))
+        if data[11:12][0] == 0:
+            self._value.append(metadata(lst2str(data[11:12]), (88, 95), "Holdup Time", "Not Supported"))
         else:
-            self._value(metadata(lst2str(data[11:12]), (88, 95), "Holdup Time", f"{data[11:12][0]}ms"))
+            self._value.append(metadata(lst2str(data[11:12]), (88, 95), "Holdup Time", f"{data[11:12][0]}ms"))
 
         Compliance_raw = lst2str(data[12:13])
         Compliance = [
@@ -1017,7 +1017,7 @@ class Source_Capabilities_Extended(metadata):
         else:
             self._value.append(metadata(TT_raw, (160, 167), "Touch Temp", "Reserved"))
         
-        SI_raw = lst2str[21:22]
+        SI_raw = lst2str(data[21:22])
         Source_Inputs = [metadata(SI_raw[7:8], (0, 0), "External Power Supply", bool(int(SI_raw[7:8])))]
 
         if bool(int(SI_raw[7:8])):
@@ -1899,6 +1899,7 @@ class pd_msg(metadata):
 
 class WITRN_DEV:
     def __init__(self, vid=K2_TARGET_VID, pid=K2_TARGET_PID, debug=False):
+        global __flag__
         __flag__ = debug
         self.data = None
         self.timestamp = None
