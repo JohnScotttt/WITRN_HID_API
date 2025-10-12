@@ -1,7 +1,7 @@
 # Copyright (c) 2025 JohnScotttt
 # Version pre 0.1.2
 
-__version__ = "pre 0.1.3"
+__version__ = "pre 0.1.4"
 
 K2_TARGET_VID = 0x0716
 K2_TARGET_PID = 0x5060
@@ -16,15 +16,15 @@ class metadata:
 
 class WITRN_DEV:
     """
-    The default vid and pid are directly connected to K2 without the need for setting.
+    The default parameters will be directly connected to K2.
 
-    Debug mode is enabled only when a large amount of 'Error Data' is detected. In this case, the API will raise an exception.
+    If necessary, you can use (vid, pid) or path parameters to connect to the device.
+
+    Debugging mode is only recommended to be enabled when a large amount of 'Error Data' is detected. 
+    In this case, the API will raise an exception.
     """
 
-    def __init__(self,
-                 vid: int = K2_TARGET_VID,
-                 pid: int = K2_TARGET_PID,
-                 debug: bool = False): ...
+    def __init__(self, *args, debug=False, **kwargs): ...
 
     def read_data() -> list: ...
     def general_unpack(self, data: list = None) -> metadata: ...

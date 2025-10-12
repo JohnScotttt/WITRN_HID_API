@@ -1,13 +1,13 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.1.3
+# Version pre 0.1.4
 
 import hid
 import struct
 import time
 from datetime import timedelta
 
-__version__ = "pre 0.1.3"
+__version__ = "pre 0.1.4"
 __flag__ = False
 
 
@@ -1898,9 +1898,36 @@ class pd_msg(metadata):
 
 
 class WITRN_DEV:
-    def __init__(self, vid=K2_TARGET_VID, pid=K2_TARGET_PID, debug=False):
+    def __init__(self, *args, debug=False, **kwargs):
         global __flag__
         __flag__ = debug
+        vid = pid = path = None
+        if args == () and kwargs == {}:
+            vid = K2_TARGET_VID
+            pid = K2_TARGET_PID
+        elif args != () and kwargs == {}:
+            if len(args) == 1 and isinstance(args[0], bytes):
+                path = args[0]
+            elif len(args) == 2 and all(isinstance(i, int) for i in args):
+                vid = args[0]
+                pid = args[1]
+            else:
+                raise ValueError("Invalid arguments")
+        elif args == () and kwargs != {}:
+            if "vid" in kwargs and "pid" in kwargs:
+                if "path" not in kwargs:
+                    vid = kwargs["vid"]
+                    pid = kwargs["pid"]
+                else:
+                    raise ValueError("Cannot specify both (vid, pid) and path")
+            else:
+                if "path" in kwargs:
+                    path = kwargs["path"]
+                else:
+                    raise ValueError("Must specify either (vid, pid) or path")
+        else:
+            raise ValueError("Cannot mix positional and keyword arguments")
+            
         self.data = None
         self.timestamp = None
         self.last_pdo = None
@@ -1908,7 +1935,10 @@ class WITRN_DEV:
         self.last_rdo = None
 
         self.dev = hid.device()
-        self.dev.open(vid, pid)
+        if path is None:
+            self.dev.open(vid, pid)
+        else:
+            self.dev.open_path(path)
 
     def read_data(self) -> list:
         self.timestamp = time.strftime("%H:%M:%S", time.localtime()) + f".{(int(time.time()*1000)%1000):03d}"
