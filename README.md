@@ -116,11 +116,12 @@ Message Header、[Extended Message Header]、[Data Objects/Data Block]的 `value
 
 若要链接WITRN HID设备读取HID流并解包，需要您创建 `WITRN_HID` 类实例。该类结构实现不需要您掌握，其提供5种可调用方法。
 
-首先是创建实例，您可以使用无参数方法创建实例默认连接K2设备，也可以传入vid、pid连接自定义设备，目前不支持多设备连接。
+首先是创建实例，您可以使用无参数方法创建实例默认连接K2设备，也可以传入int类型的vid、pid连接自定义设备，或者是传入bytes类型的path连接自定义设备。
 
 ```python
 dev = WITRN_HID()
-dev = WITRN_HID(vid, pid)
+dev = WITRN_HID(vid: int, pid: int)
+dev = WITRN_HID(path: bytes)
 ```
 
 创建实例会默认连接设备并打开HID流，无需手动开启。
