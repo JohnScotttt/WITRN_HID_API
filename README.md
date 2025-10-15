@@ -1,6 +1,6 @@
 # 基于Python的WITRN HID通用API
 
-![version](https://img.shields.io/badge/Version-0.1.4-green)
+![version](https://img.shields.io/badge/Version-0.2.0-green)
 
 ## 项目介绍
 
@@ -10,7 +10,7 @@
 
 ## 项目进度&画饼
 
-除了VDM都完成了
+已完成所有PD报文解析！正式进入Debug阶段。
 
 ## 使用
 
@@ -34,8 +34,6 @@ import witrnhid
 ```
 
 即可开箱使用。
-
-未来会上传至PyPI。
 
 ## 数据结构
 
@@ -134,7 +132,7 @@ dev = WITRN_HID(path: bytes)
 
 `auto_unpack()` 方法将自动分析HID消息类型并解析，如果不提供参数则默认解析实例内保存的HID消息，返回时间戳和解析完的元数据；如果提供64长度的uint8 list将会解析提供的内容，返回解析完的元数据。
 
-注意，本API不会为您检查消息的正确性，如果解析失败则会直接覆写 `value` 为消息的十六进制值，如需查看失败报错则打开debug模式。
+注意，本API不会严格检查消息的正确性，如果解析失败则会直接覆写 `value` 为消息的十六进制值，如需查看失败报错则打开debug模式。
 
 `close()` 方法将关闭实例的HID连接。
 
