@@ -1,7 +1,7 @@
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.2.0
+# Version pre 0.2.1
 
-__version__ = "pre 0.2.0"
+__version__ = "pre 0.2.1"
 
 K2_TARGET_VID = 0x0716
 K2_TARGET_PID = 0x5060
@@ -42,3 +42,10 @@ class WITRN_DEV:
                     last_rdo: metadata = None) -> metadata: ...
 
     def close(self): ...
+
+
+def is_pdo(msg: metadata) -> bool: ...
+
+def is_rdo(msg: metadata) -> bool: ...
+
+def provide_ext(msg: metadata) -> bool: ...

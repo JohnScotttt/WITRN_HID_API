@@ -1,13 +1,13 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.2.0
+# Version pre 0.2.1
 
 import hid
 import struct
 import time
 from datetime import timedelta
 
-__version__ = "pre 0.2.0"
+__version__ = "pre 0.2.1"
 __flag__ = False
 
 
