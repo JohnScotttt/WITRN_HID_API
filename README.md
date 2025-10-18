@@ -1,6 +1,6 @@
 # 基于Python的WITRN HID通用API
 
-![version](https://img.shields.io/badge/Version-0.2.1-green)
+![version](https://img.shields.io/badge/Version-0.2.2-green)
 
 ## 项目介绍
 
@@ -126,11 +126,11 @@ dev = WITRN_HID(path: bytes)
 
 `read_data()` 方法将获取从当前时刻后HID流中的第一个完整HID消息，返回uint8 list，并且在实例内默认保存获取时刻的时间戳（分辨率0.001s）和HID消息内容，保存到下次调用该方法时被覆盖。实例不会为您维护一个HID消息缓存栈，请您自行维护。
 
-`general_unpack()` 方法将解析常规HID消息，如果不提供参数则默认解析实例内保存的HID消息，返回时间戳和解析完的元数据；如果提供64长度的uint8 list将会解析提供的内容，返回解析完的元数据。
+`general_unpack()` 方法将解析常规HID消息，如果不提供参数则默认解析实例内保存的HID消息，返回读到消息时的时间戳和解析完的元数据；如果提供64长度的uint8 list将会解析提供的内容，返回调用函数时的时间戳和解析完的元数据。
 
-`pd_unpack()` 方法将解析PD HID消息，如果不提供参数则默认解析实例内保存的HID消息，返回时间戳和解析完的元数据；如果提供64长度的uint8 list将会解析提供的内容，返回解析完的元数据。如您自行维护消息栈，需要按需同时提供 `last_pdo` 、 `last_ext` 和 `last_rdo` （均以metadata类）保证解析的正确性，其中 `last_pdo` 为可能的Request消息提供PDO信息， `last_ext` 为可能的分包的Extended消息提供上下文， `last_rdo` 为可能的Status消息提供RDO信息。
+`pd_unpack()` 方法将解析PD HID消息，如果不提供参数则默认解析实例内保存的HID消息，返回读到消息时的时间戳和解析完的元数据；如果提供64长度的uint8 list将会解析提供的内容，返回调用函数时的时间戳和解析完的元数据。如您自行维护消息栈，需要按需同时提供 `last_pdo` 、 `last_ext` 和 `last_rdo` （均以metadata类）保证解析的正确性，其中 `last_pdo` 为可能的Request消息提供PDO信息， `last_ext` 为可能的分包的Extended消息提供上下文， `last_rdo` 为可能的Status消息提供RDO信息。
 
-`auto_unpack()` 方法将自动分析HID消息类型并解析，如果不提供参数则默认解析实例内保存的HID消息，返回时间戳和解析完的元数据；如果提供64长度的uint8 list将会解析提供的内容，返回解析完的元数据。如您自行维护消息栈，需要按需同时提供 `last_pdo` 、 `last_ext` 和 `last_rdo` （均以 `metadata` 类型）保证解析的正确性，其中 `last_pdo` 为可能的Request消息提供PDO信息， `last_ext` 为可能的分包的Extended消息提供上下文， `last_rdo` 为可能的Status消息提供RDO信息。
+`auto_unpack()` 方法将自动分析HID消息类型并解析，如果不提供参数则默认解析实例内保存的HID消息，返回读到消息时的时间戳和解析完的元数据；如果提供64长度的uint8 list将会解析提供的内容，返回调用函数时的时间戳和解析完的元数据。如您自行维护消息栈，需要按需同时提供 `last_pdo` 、 `last_ext` 和 `last_rdo` （均以 `metadata` 类型）保证解析的正确性，其中 `last_pdo` 为可能的Request消息提供PDO信息， `last_ext` 为可能的分包的Extended消息提供上下文， `last_rdo` 为可能的Status消息提供RDO信息。
 
 注意，本API不会严格检查消息的正确性，如果解析失败则会直接覆写 `value` 为消息的十六进制值，如需查看失败报错则打开debug模式。
 

@@ -1,13 +1,13 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.2.1
+# Version pre 0.2.2
 
 import hid
 import struct
 import time
 from datetime import timedelta
 
-__version__ = "pre 0.2.1"
+__version__ = "pre 0.2.2"
 __flag__ = False
 
 
@@ -2303,7 +2303,7 @@ class WITRN_DEV:
         self.data = self.dev.read(64)
         return self.data
 
-    def general_unpack(self, data: list = None) -> metadata:
+    def general_unpack(self, data: list = None) -> tuple[str, metadata]:
         if data is None:
             if self.data is None:
                 raise ValueError("No data available to unpack")
@@ -2313,13 +2313,14 @@ class WITRN_DEV:
         else:
             if len(data) < 64:
                 raise ValueError("Data length is less than expected (64 bytes)")
-            return general_msg(data)
+            timestamp = time.strftime("%H:%M:%S", time.localtime()) + f".{(int(time.time()*1000)%1000):03d}"
+            return timestamp, general_msg(data)
 
     def pd_unpack(self,
                   data: list = None,
                   last_pdo: metadata = None,
                   last_ext: metadata = None,
-                  last_rdo: metadata = None) -> metadata:
+                  last_rdo: metadata = None) -> tuple[str, metadata]:
         if data is None:
             if self.data is None:
                 raise ValueError("No data available to unpack")
@@ -2338,13 +2339,14 @@ class WITRN_DEV:
         else:
             if len(data) < 64:
                 raise ValueError("Data length is less than expected (64 bytes)")
-            return pd_msg(data, last_pdo, last_ext, last_rdo)
-        
+            timestamp = time.strftime("%H:%M:%S", time.localtime()) + f".{(int(time.time()*1000)%1000):03d}"
+            return timestamp, pd_msg(data, last_pdo, last_ext, last_rdo)
+
     def auto_unpack(self,
                     data: list = None,
                     last_pdo: metadata = None,
                     last_ext: metadata = None,
-                    last_rdo: metadata = None) -> metadata:
+                    last_rdo: metadata = None) -> tuple[str, metadata]:
         if data is None:
             if self.data is None:
                 raise ValueError("No data available to unpack")
@@ -2361,7 +2363,6 @@ class WITRN_DEV:
                 return self.general_unpack(data)
             elif data[0] == 254:
                 return self.pd_unpack(data, last_pdo, last_ext, last_rdo)
-            
 
     def close(self):
         self.dev.close()

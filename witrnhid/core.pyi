@@ -1,7 +1,7 @@
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.2.1
+# Version pre 0.2.2
 
-__version__ = "pre 0.2.1"
+__version__ = "pre 0.2.2"
 
 K2_TARGET_VID = 0x0716
 K2_TARGET_PID = 0x5060
@@ -27,19 +27,19 @@ class WITRN_DEV:
     def __init__(self, *args, debug=False, **kwargs): ...
 
     def read_data() -> list: ...
-    def general_unpack(self, data: list = None) -> metadata: ...
+    def general_unpack(self, data: list = None) -> tuple[str, metadata]: ...
 
     def pd_unpack(self,
                   data: list = None,
                   last_pdo: metadata = None,
                   last_ext: metadata = None,
-                  last_rdo: metadata = None) -> metadata: ...
+                  last_rdo: metadata = None) -> tuple[str, metadata]: ...
 
     def auto_unpack(self,
                     data: list = None,
                     last_pdo: metadata = None,
                     last_ext: metadata = None,
-                    last_rdo: metadata = None) -> metadata: ...
+                    last_rdo: metadata = None) -> tuple[str, metadata]: ...
 
     def close(self): ...
 
