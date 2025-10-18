@@ -1,6 +1,6 @@
 # 基于Python的WITRN HID通用API
 
-![version](https://img.shields.io/badge/Version-0.2.2-green)
+![version](https://img.shields.io/badge/Version-0.3.0-green)
 
 ## 项目介绍
 
@@ -112,17 +112,19 @@ Message Header、[Extended Message Header]、[Data Objects/Data Block]的 `value
 
 ### WITRN_HID类
 
-若要链接WITRN HID设备读取HID流并解包，需要您创建 `WITRN_HID` 类实例。该类结构实现不需要您掌握，其提供5种可调用方法。
-
-首先是创建实例，您可以使用无参数方法创建实例默认连接K2设备，也可以传入int类型的vid、pid连接自定义设备，或者是传入bytes类型的path连接自定义设备。
+若要链接WITRN HID设备读取HID流并解包，需要您创建 `WITRN_HID` 类实例。该类结构实现不需要您掌握，其提供6种可调用方法。注意从pre 0.3.0版本开始不再支持创建实例时自动连接设备，需要手动连接。
 
 ```python
 dev = WITRN_HID()
-dev = WITRN_HID(vid: int, pid: int)
-dev = WITRN_HID(path: bytes)
 ```
 
-创建实例会默认连接设备并打开HID流，无需手动开启。
+`open()` 方法允许您使用无参数方法连接K2设备，也可以传入int类型的vid、pid连接自定义设备，或者是传入bytes类型的path连接自定义设备。
+
+```python
+dev.open()
+dev.open(vid: int, pid: int)
+dev.open(path: bytes)
+```
 
 `read_data()` 方法将获取从当前时刻后HID流中的第一个完整HID消息，返回uint8 list，并且在实例内默认保存获取时刻的时间戳（分辨率0.001s）和HID消息内容，保存到下次调用该方法时被覆盖。实例不会为您维护一个HID消息缓存栈，请您自行维护。
 
@@ -140,11 +142,11 @@ dev = WITRN_HID(path: bytes)
 
 创建实例时将 `debug` 传参设置为True
 
-```
-dev = WITRN_HID(vid, pid, debug=True)
+```python
+dev = WITRN_HID(debug=True)
 ```
 
-即可开启break debug。
+即可开启解析时break debug。
 
 ### 一些工具函数
 
@@ -166,11 +168,11 @@ dev = WITRN_HID(vid, pid, debug=True)
 
 ```python
 if is_pdo(msg):
-	last_pdo = msg
+    last_pdo = msg
 if provide_ext(msg):
-	last_ext = msg
+    last_ext = msg
 if is_rdo(msg):
-	last_rdo = msg
+    last_rdo = msg
 ```
 
 并且始终为解析提供这三个元数据，如此能保证解析的相对正确性。

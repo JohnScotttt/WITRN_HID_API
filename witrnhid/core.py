@@ -1,13 +1,13 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.2.2
+# Version pre 0.3.0
 
 import hid
 import struct
 import time
 from datetime import timedelta
 
-__version__ = "pre 0.2.2"
+__version__ = "pre 0.3.0"
 __flag__ = False
 
 
@@ -2256,9 +2256,16 @@ class pd_msg(metadata):
 
 
 class WITRN_DEV:
-    def __init__(self, *args, debug=False, **kwargs):
+    def __init__(self, **kwargs):
         global __flag__
-        __flag__ = debug
+        __flag__ = kwargs.get("debug", False)
+        self.data = None
+        self.timestamp = None
+        self.last_pdo = None
+        self.last_ext = None
+        self.last_rdo = None
+
+    def open(self, *args, **kwargs):
         vid = pid = path = None
         if args == () and kwargs == {}:
             vid = K2_TARGET_VID
@@ -2285,12 +2292,6 @@ class WITRN_DEV:
                     raise ValueError("Must specify either (vid, pid) or path")
         else:
             raise ValueError("Cannot mix positional and keyword arguments")
-            
-        self.data = None
-        self.timestamp = None
-        self.last_pdo = None
-        self.last_ext = None
-        self.last_rdo = None
 
         self.dev = hid.device()
         if path is None:
