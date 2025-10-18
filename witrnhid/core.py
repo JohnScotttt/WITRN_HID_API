@@ -1,13 +1,12 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.3.0
+# Version pre 0.3.1
 
 import hid
 import struct
-import time
-from datetime import timedelta
+from datetime import timedelta, datetime
 
-__version__ = "pre 0.3.0"
+__version__ = "pre 0.3.1"
 __flag__ = False
 
 
@@ -2300,7 +2299,7 @@ class WITRN_DEV:
             self.dev.open_path(path)
 
     def read_data(self) -> list:
-        self.timestamp = time.strftime("%H:%M:%S", time.localtime()) + f".{(int(time.time()*1000)%1000):03d}"
+        self.timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.data = self.dev.read(64)
         return self.data
 
@@ -2314,7 +2313,7 @@ class WITRN_DEV:
         else:
             if len(data) < 64:
                 raise ValueError("Data length is less than expected (64 bytes)")
-            timestamp = time.strftime("%H:%M:%S", time.localtime()) + f".{(int(time.time()*1000)%1000):03d}"
+            timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
             return timestamp, general_msg(data)
 
     def pd_unpack(self,
@@ -2340,7 +2339,7 @@ class WITRN_DEV:
         else:
             if len(data) < 64:
                 raise ValueError("Data length is less than expected (64 bytes)")
-            timestamp = time.strftime("%H:%M:%S", time.localtime()) + f".{(int(time.time()*1000)%1000):03d}"
+            timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
             return timestamp, pd_msg(data, last_pdo, last_ext, last_rdo)
 
     def auto_unpack(self,
