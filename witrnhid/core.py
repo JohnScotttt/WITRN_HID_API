@@ -1,12 +1,12 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.3.2
+# Version pre 0.3.6
 
 import hid
 import struct
 from datetime import timedelta, datetime
 
-__version__ = "pre 0.3.2"
+__version__ = "pre 0.3.6"
 __flag__ = False
 
 
@@ -60,6 +60,21 @@ class metadata:
                 return self._value[field]
         else:
             return "Not a list"
+        
+    def quick_pdo(self) -> str:
+        return "Not a PDO"
+    
+    def quick_rdo(self) -> str:
+        return "Not a RDO"
+    
+    def pdo(self) -> "metadata":
+        return None
+    
+    def full_raw(self) -> str:
+        return self._raw
+
+    def raw_value(self):
+        return self._value
 
 
 class general_msg(metadata):
@@ -203,10 +218,14 @@ class msg_header(metadata):
 
 
 def is_pdo(msg: metadata) -> bool:
+    if msg["Message Header"] is None:
+        return False
     msg_type = msg["Message Header"]["Message Type"].value()
     return msg_type in ["Source_Capabilities", "EPR_Source_Capabilities"]
 
 def is_rdo(msg: metadata) -> bool:
+    if msg["Message Header"] is None:
+        return False
     msg_type = msg["Message Header"]["Message Type"].value()
     return msg_type in ["Request", "EPR_Request"]
 
@@ -286,6 +305,11 @@ class FPDO(metadata):
             metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) / 100}A")
         ]
 
+        self._quick_pdo = f"F {int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+
+    def quick_pdo(self) -> str:
+        return self._quick_pdo
+
 
 class FPDO_S(metadata):
     def __init__(self, raw: str, bit_loc: tuple, field: str):
@@ -322,6 +346,11 @@ class BPDO(metadata):
             metadata(raw[22:32], (9, 0), "Maximum Allowable Power", f"{int(raw[22:32], 2) / 4}W")
         ]
 
+        self._quick_pdo = f"B {int(raw[12:22], 2) / 20}-{int(raw[2:12], 2) / 20}V@{int(raw[22:32], 2) / 4}W"
+
+    def quick_pdo(self) -> str:
+        return self._quick_pdo
+
 
 class BPDO_S(metadata):
     def __init__(self, raw: str, bit_loc: tuple, field: str):
@@ -343,6 +372,11 @@ class VPDO(metadata):
             metadata(raw[12:22], (19, 10), "Minimum Voltage", f"{int(raw[12:22], 2) / 20}V"),
             metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) / 100}A")
         ]
+
+        self._quick_pdo = f"V {int(raw[2:12], 2) / 20}-{int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+
+    def quick_pdo(self) -> str:
+        return self._quick_pdo
 
 
 class VPDO_S(metadata):
@@ -370,6 +404,11 @@ class PPS_PDO(metadata):
             metadata(raw[24:25], (7, 7), "Reserved"),
             metadata(raw[25:32], (6, 0), "Maximum Current", f"{int(raw[25:32], 2) / 20}A"),
         ]
+
+        self._quick_pdo = f"P {int(raw[16:24], 2) / 10}-{int(raw[7:15], 2) / 10}V@{int(raw[25:32], 2) / 20}A"
+
+    def quick_pdo(self) -> str:
+        return self._quick_pdo
 
 
 class PPS_PDO_S(metadata):
@@ -400,6 +439,11 @@ class EPR_AVS_PDO(metadata):
             metadata(raw[24:32], (7, 0), "PDP", f"{int(raw[24:32], 2)}W"),
         ]
 
+        self._quick_pdo = f"A {int(raw[16:24], 2) / 10}-{int(raw[6:15], 2) / 10}V@{int(raw[24:32], 2)}W"
+
+    def quick_pdo(self) -> str:
+        return self._quick_pdo
+
 
 class EPR_AVS_PDO_S(metadata):
     def __init__(self, raw: str, bit_loc: tuple, field: str):
@@ -426,6 +470,11 @@ class SPR_AVS_PDO(metadata):
             metadata(raw[12:22], (19, 10), "Maximum Current 15V", f"{int(raw[12:22], 2) / 100}A"),
             metadata(raw[22:32], (9, 0), "Maximum Current 20V", f"{int(raw[22:32], 2) / 100}A"),
         ]
+
+        self._quick_pdo = f"A 9-15V@{int(raw[12:22], 2) / 100}A 15-20V@{int(raw[22:32], 2) / 100}A"
+
+    def quick_pdo(self) -> str:
+        return self._quick_pdo
 
 
 class SPR_AVS_PDO_S(metadata):
@@ -457,8 +506,24 @@ class F_VRDO(metadata):
             metadata(raw[22:32], (9, 0), "Maximum Operating Current", f"{int(raw[22:32], 2) / 100}A"),
         ]
 
+        if self._pdo["Supply Type"].value() == "FPDO":
+            if self._value[0].value() < 8:
+                self._quick_rdo = f"[{self._value[0].value()}] F {self._pdo['Voltage'].value()}@{self._value[8].value()}"
+            else:
+                self._quick_rdo = f"[{self._value[0].value()}] EF {self._pdo['Voltage'].value()}@{self._value[8].value()}"
+        elif self._pdo["Supply Type"].value() == "VPDO":
+            if self._value[0].value() < 8:
+                self._quick_rdo = (f"[{self._value[0].value()}] V {self._pdo['Minimum Voltage'].value()[:-1]}"
+                                   f"-{self._pdo['Maximum Voltage'].value()}@{self._value[8].value()}")
+            else:
+                self._quick_rdo = (f"[{self._value[0].value()}] EV {self._pdo['Minimum Voltage'].value()[:-1]}"
+                                   f"-{self._pdo['Maximum Voltage'].value()}@{self._value[8].value()}")
+
     def pdo(self) -> metadata:
         return self._pdo
+    
+    def quick_rdo(self) -> str:
+        return self._quick_rdo
 
 
 class BRDO(metadata):
@@ -477,9 +542,19 @@ class BRDO(metadata):
             metadata(raw[12:22], (19, 10), "Operating Power", f"{int(raw[12:22], 2) / 4}W"),
             metadata(raw[22:32], (9, 0), "Maximum Operating Power", f"{int(raw[22:32], 2) / 4}W"),
         ]
+
+        if self._value[0].value() < 8:
+            self._quick_rdo = (f"[{self._value[0].value()}] B {self._pdo['Minimum Voltage'].value()[:-1]}"
+                               f"-{self._pdo['Maximum Voltage'].value()}@{self._value[8].value()}")
+        else:
+            self._quick_rdo = (f"[{self._value[0].value()}] EB {self._pdo['Minimum Voltage'].value()[:-1]}"
+                               f"-{self._pdo['Maximum Voltage'].value()}@{self._value[8].value()}")
     
     def pdo(self) -> metadata:
         return self._pdo
+    
+    def quick_rdo(self) -> str:
+        return self._quick_rdo
 
 
 class PPS_RDO(metadata):
@@ -499,9 +574,14 @@ class PPS_RDO(metadata):
             metadata(raw[23:25], (8, 7), "Reserved"),
             metadata(raw[25:32], (6, 0), "Operating Current", f"{int(raw[25:32], 2) / 20}A"),
         ]
+
+        self._quick_rdo = f"[{self._value[0].value()}] P {self._value[8].value()}@{self._value[10].value()}"
     
     def pdo(self) -> metadata:
         return self._pdo
+    
+    def quick_rdo(self) -> str:
+        return self._quick_rdo
 
 
 class AVS_RDO(metadata):
@@ -521,9 +601,17 @@ class AVS_RDO(metadata):
             metadata(raw[23:25], (8, 7), "Reserved"),
             metadata(raw[25:32], (6, 0), "Operating Current", f"{int(raw[25:32], 2) / 20}A"),
         ]
-    
+
+        if self._value[0].value() < 8:
+            self._quick_rdo = f"[{self._value[0].value()}] A {self._value[8].value()}@{self._value[10].value()}"
+        else:
+            self._quick_rdo = f"[{self._value[0].value()}] EA {self._value[8].value()}@{self._value[10].value()}"
+
     def pdo(self) -> metadata:
         return self._pdo
+    
+    def quick_rdo(self) -> str:
+        return self._quick_rdo
 
 
 class ID_Header_VDO(metadata):
@@ -963,6 +1051,8 @@ class Request(metadata):
     def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
+        if "last_pdo" not in kwargs:
+            self._value = "Invalid Request Message"
         pdo_list = kwargs["last_pdo"]["Data Objects"].value()
         sub_raw = lst2str(data[0:4])
         pdo = pdo_list[int(sub_raw[0:4], 2) - 1]
@@ -1378,7 +1468,7 @@ class Source_Capabilities_Extended(metadata):
                 metadata(PC_raw[1:5], (14, 11), "Duty Cycle", f"{int(PC_raw[1:5], 2) * 5}%"),
                 metadata(PC_raw[0:1], (15, 15), "VBUS Droop", bool(int(PC_raw[0:1])))
             ]
-            self._value.append(metadata(PC_raw, ((14+i*2)*8, (16+i*2)*8-1), "Peak Current", Peak_Current))
+            self._value.append(metadata(PC_raw, ((14+i*2)*8, (16+i*2)*8-1), f"Peak Current{i+1}", Peak_Current))
 
         self._value.append(metadata(lst2str(data[20:21]), (160, 167), "Touch Temp",
                                     Touch_Temp.get(data[20:21][0], "Reserved")))
