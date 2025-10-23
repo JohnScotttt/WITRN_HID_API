@@ -1,12 +1,12 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.3.7
+# Version pre 0.3.8
 
 import hid
 import struct
 from datetime import timedelta, datetime
 
-__version__ = "pre 0.3.7"
+__version__ = "pre 0.3.8"
 __flag__ = False
 
 
@@ -1051,8 +1051,9 @@ class Request(metadata):
     def __init__(self, data: list, bit_loc: tuple, **kwargs):
         super().__init__(bit_loc=bit_loc, field="Data Objects")
         self._raw = lst2str(data, '>')
-        if "last_pdo" not in kwargs:
+        if kwargs["last_pdo"] == None:
             self._value = "Invalid Request Message"
+            return
         pdo_list = kwargs["last_pdo"]["Data Objects"].value()
         sub_raw = lst2str(data[0:4])
         pdo = pdo_list[int(sub_raw[0:4], 2) - 1]
