@@ -1,7 +1,7 @@
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.3.6
+# Version pre 0.3.7
 
-__version__ = "pre 0.3.6"
+__version__ = "pre 0.3.7"
 
 K2_TARGET_VID = 0x0716
 K2_TARGET_PID = 0x5060
