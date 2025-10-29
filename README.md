@@ -1,6 +1,6 @@
 # 基于Python的WITRN HID通用API
 
-![version](https://img.shields.io/badge/Version-0.3.8-green)
+![version](https://img.shields.io/badge/Versio-1.0.0-green)
 
 ## 项目介绍
 
@@ -180,3 +180,7 @@ if is_rdo(msg):
 Q：为什么不将判断写入WITRN_HID？
 
 A：事实上默认的流式解析是包含判断逻辑的，但是并不维护消息栈。而通过传参的方式解析不应该影响类的内部变量，所以需要通过外部判断。
+
+## License
+
+从1.0.0版本开始本项目许可证由GPL变更为LGPL许可证。旧版本代码仍遵循GPL协议。

@@ -1,12 +1,12 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version pre 0.3.8
+# Version 1.0.0
 
 import hid
 import struct
 from datetime import timedelta, datetime
 
-__version__ = "pre 0.3.8"
+__version__ = "1.0.0"
 __flag__ = False
 
 
@@ -1445,18 +1445,18 @@ class Source_Capabilities_Extended(metadata):
 
         Compliance_raw = lst2str(data[12:13])
         Compliance = [
-            metadata(Compliance_raw[7:8], (0, 0), "LPS compliant", bool(int(Compliance_raw[7:8]))),
-            metadata(Compliance_raw[6:7], (1, 1), "PS1 compliant", bool(int(Compliance_raw[6:7]))),
-            metadata(Compliance_raw[5:6], (2, 2), "PS2 compliant", bool(int(Compliance_raw[5:6]))),
+            metadata(Compliance_raw[7:8], (0, 0), "LPS Compliant", bool(int(Compliance_raw[7:8]))),
+            metadata(Compliance_raw[6:7], (1, 1), "PS1 Compliant", bool(int(Compliance_raw[6:7]))),
+            metadata(Compliance_raw[5:6], (2, 2), "PS2 Compliant", bool(int(Compliance_raw[5:6]))),
             metadata(Compliance_raw[0:5], (7, 3), "Reserved")
         ]
         self._value.append(metadata(Compliance_raw, (96, 103), "Compliance", Compliance))
 
         TC_raw = lst2str(data[13:14])
         Touch_Current = [
-            metadata(TC_raw[7:8], (0, 0), "Low touch current EPS", bool(int(TC_raw[7:8]))),
-            metadata(TC_raw[6:7], (1, 1), "Ground pin supported", bool(int(TC_raw[6:7]))),
-            metadata(TC_raw[5:6], (2, 2), "Ground pin intended for protective earth", bool(int(TC_raw[5:6]))),
+            metadata(TC_raw[7:8], (0, 0), "Low Touch Current EPS", bool(int(TC_raw[7:8]))),
+            metadata(TC_raw[6:7], (1, 1), "Ground Pin Supported", bool(int(TC_raw[6:7]))),
+            metadata(TC_raw[5:6], (2, 2), "Ground Pin Intended for Protective Earth", bool(int(TC_raw[5:6]))),
             metadata(TC_raw[0:5], (7, 3), "Reserved")
         ]
         self._value.append(metadata(TC_raw, (104, 111), "Touch Current", Touch_Current))
@@ -1935,13 +1935,13 @@ class PPS_Status(metadata):
             self._value.append(metadata(lst2str(data[0:2]), (0, 15), "Output Voltage", "Not Support"))
         else:
             self._value.append(metadata(lst2str(data[0:2]), (0, 15), "Output Voltage",
-                                        f"{int(lst2str(data[0:2]), 2) / 50}mV"))
+                                        f"{int(lst2str(data[0:2]), 2) / 50}V"))
         
         if lst2str(data[2:3]) == "1" * 8:
             self._value.append(metadata(lst2str(data[2:3]), (16, 23), "Output Current", "Not Support"))
         else:
             self._value.append(metadata(lst2str(data[2:3]), (16, 23), "Output Current",
-                                        f"{int(lst2str(data[2:3]), 2) / 20}mA"))
+                                        f"{int(lst2str(data[2:3]), 2) / 20}A"))
         
         RTF_raw = lst2str(data[3:4])
         Real_Time_Flags = [
@@ -2012,9 +2012,9 @@ class Sink_Capabilities_Extended(metadata):
 
         SLC_raw = lst2str(data[12:14])
         Sink_Load_Characteristics = [
-            metadata(SLC_raw[11:16], (4, 0), "Percent overload", f"{min(25, int(SLC_raw[11:16], 2)) * 10}%"),
-            metadata(SLC_raw[5:11], (10, 5), "Overload period", f"{int(SLC_raw[5:11], 2) * 20}ms"),
-            metadata(SLC_raw[1:5], (14, 11), "Duty cycle", f"{int(SLC_raw[1:5], 2) * 5}%"),
+            metadata(SLC_raw[11:16], (4, 0), "Percent Overload", f"{min(25, int(SLC_raw[11:16], 2)) * 10}%"),
+            metadata(SLC_raw[5:11], (10, 5), "Overload Period", f"{int(SLC_raw[5:11], 2) * 20}ms"),
+            metadata(SLC_raw[1:5], (14, 11), "Duty Cycle", f"{int(SLC_raw[1:5], 2) * 5}%"),
             metadata(SLC_raw[0:1], (15, 15), "VBUS Droop", bool(int(SLC_raw[0:1])))
         ]
         self._value.append(metadata(SLC_raw, (96, 111), "Sink Load Characteristics", Sink_Load_Characteristics))
@@ -2040,11 +2040,11 @@ class Sink_Capabilities_Extended(metadata):
 
         SM_raw = lst2str(data[17:18])
         Sink_Modes = [
-            metadata(SM_raw[7:8], (0, 0), "PPS charging supported", bool(int(SM_raw[7:8]))),
-            metadata(SM_raw[6:7], (1, 1), "VBUS powered", bool(int(SM_raw[6:7]))),
-            metadata(SM_raw[5:6], (2, 2), "AC Supply powered", bool(int(SM_raw[5:6]))),
-            metadata(SM_raw[4:5], (3, 3), "Battery powered", bool(int(SM_raw[4:5]))),
-            metadata(SM_raw[3:4], (4, 4), "Battery essentially unlimited", bool(int(SM_raw[3:4]))),
+            metadata(SM_raw[7:8], (0, 0), "PPS Charging Supported", bool(int(SM_raw[7:8]))),
+            metadata(SM_raw[6:7], (1, 1), "VBUS Powered", bool(int(SM_raw[6:7]))),
+            metadata(SM_raw[5:6], (2, 2), "AC Supply Powered", bool(int(SM_raw[5:6]))),
+            metadata(SM_raw[4:5], (3, 3), "Battery Powered", bool(int(SM_raw[4:5]))),
+            metadata(SM_raw[3:4], (4, 4), "Battery Essentially Unlimited", bool(int(SM_raw[3:4]))),
             metadata(SM_raw[2:3], (5, 5), "AVS Support", bool(int(SM_raw[2:3]))),
             metadata(SM_raw[0:2], (7, 6), "Reserved")
         ]
