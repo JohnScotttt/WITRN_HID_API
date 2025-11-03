@@ -1,12 +1,12 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version 1.0.0
+# Version 1.0.1
 
 import hid
 import struct
 from datetime import timedelta, datetime
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __flag__ = False
 
 
@@ -304,8 +304,11 @@ class FPDO(metadata):
             metadata(raw[12:22], (19, 10), "Voltage", f"{int(raw[12:22], 2) / 20}V"),
             metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) / 100}A")
         ]
-
-        self._quick_pdo = f"F {int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+        
+        if field[-1] < 8:
+            self._quick_pdo = f"F {int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+        else:
+            self._quick_pdo = f"EF {int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
 
     def quick_pdo(self) -> str:
         return self._quick_pdo
@@ -439,7 +442,7 @@ class EPR_AVS_PDO(metadata):
             metadata(raw[24:32], (7, 0), "PDP", f"{int(raw[24:32], 2)}W"),
         ]
 
-        self._quick_pdo = f"A {int(raw[16:24], 2) / 10}-{int(raw[6:15], 2) / 10}V@{int(raw[24:32], 2)}W"
+        self._quick_pdo = f"EA {int(raw[16:24], 2) / 10}-{int(raw[6:15], 2) / 10}V@{int(raw[24:32], 2)}W"
 
     def quick_pdo(self) -> str:
         return self._quick_pdo
@@ -471,7 +474,7 @@ class SPR_AVS_PDO(metadata):
             metadata(raw[22:32], (9, 0), "Maximum Current 20V", f"{int(raw[22:32], 2) / 100}A"),
         ]
 
-        self._quick_pdo = f"A 9-15V@{int(raw[12:22], 2) / 100}A 15-20V@{int(raw[22:32], 2) / 100}A"
+        self._quick_pdo = f"SA 9-15V@{int(raw[12:22], 2) / 100}A 15-20V@{int(raw[22:32], 2) / 100}A"
 
     def quick_pdo(self) -> str:
         return self._quick_pdo
@@ -603,7 +606,7 @@ class AVS_RDO(metadata):
         ]
 
         if self._value[0].value() < 8:
-            self._quick_rdo = f"[{self._value[0].value()}] A {self._value[8].value()}@{self._value[10].value()}"
+            self._quick_rdo = f"[{self._value[0].value()}] SA {self._value[8].value()}@{self._value[10].value()}"
         else:
             self._quick_rdo = f"[{self._value[0].value()}] EA {self._value[8].value()}@{self._value[10].value()}"
 

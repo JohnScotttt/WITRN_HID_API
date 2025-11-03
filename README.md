@@ -1,16 +1,16 @@
 # 基于Python的WITRN HID通用API
 
-![version](https://img.shields.io/badge/Versio-1.0.0-green)
+![version](https://img.shields.io/badge/Versio-1.0.1-green)
 
 ## 项目介绍
 
 该项目提供面向Python的接收WITRN HID数据流的通用API，仅需要pip安装即可使用。
 
-当前版本为预览版，可能存在许多问题，您可以向本项目反馈issue，暂不接受PR，感谢您的支持。
+当前版本为正式版，可能存在许多问题，您可以向本项目反馈issue和提供PR，感谢您的支持。
 
 ## 项目进度&画饼
 
-已完成所有PD报文解析！正式进入Debug阶段。
+伟大的正式版已发布
 
 ## 使用
 
