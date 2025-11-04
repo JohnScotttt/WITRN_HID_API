@@ -1,6 +1,6 @@
 # 基于Python的WITRN HID通用API
 
-![version](https://img.shields.io/badge/Versio-1.0.1-green)
+![version](https://img.shields.io/badge/Versio-1.0.2-green)
 
 ## 项目介绍
 

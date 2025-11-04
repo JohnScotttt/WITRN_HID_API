@@ -1,12 +1,12 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version 1.0.1
+# Version 1.0.2
 
 import hid
 import struct
 from datetime import timedelta, datetime
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __flag__ = False
 
 
@@ -304,11 +304,17 @@ class FPDO(metadata):
             metadata(raw[12:22], (19, 10), "Voltage", f"{int(raw[12:22], 2) / 20}V"),
             metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) / 100}A")
         ]
-        
-        if field[-1] < 8:
-            self._quick_pdo = f"F {int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
-        else:
-            self._quick_pdo = f"EF {int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+
+        try:
+            if int(field[-1]) < 8:
+                self._quick_pdo = f"F {int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+            else:
+                self._quick_pdo = f"EF {int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+        except:
+            if (int(raw[12:22], 2) / 20) <= 20:
+                self._quick_pdo = f"F {int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+            else:
+                self._quick_pdo = f"EF {int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
 
     def quick_pdo(self) -> str:
         return self._quick_pdo
@@ -349,7 +355,16 @@ class BPDO(metadata):
             metadata(raw[22:32], (9, 0), "Maximum Allowable Power", f"{int(raw[22:32], 2) / 4}W")
         ]
 
-        self._quick_pdo = f"B {int(raw[12:22], 2) / 20}-{int(raw[2:12], 2) / 20}V@{int(raw[22:32], 2) / 4}W"
+        try:
+            if int(field[-1]) < 8:
+                self._quick_pdo = f"B {int(raw[12:22], 2) / 20}-{int(raw[2:12], 2) / 20}V@{int(raw[22:32], 2) / 4}W"
+            else:
+                self._quick_pdo = f"EB {int(raw[12:22], 2) / 20}-{int(raw[2:12], 2) / 20}V@{int(raw[22:32], 2) / 4}W"
+        except:
+            if (int(raw[2:12], 2) / 20) <= 20:
+                self._quick_pdo = f"B {int(raw[12:22], 2) / 20}-{int(raw[2:12], 2) / 20}V@{int(raw[22:32], 2) / 4}W"
+            else:
+                self._quick_pdo = f"EB {int(raw[12:22], 2) / 20}-{int(raw[2:12], 2) / 20}V@{int(raw[22:32], 2) / 4}W"
 
     def quick_pdo(self) -> str:
         return self._quick_pdo
@@ -376,7 +391,16 @@ class VPDO(metadata):
             metadata(raw[22:32], (9, 0), "Maximum Current", f"{int(raw[22:32], 2) / 100}A")
         ]
 
-        self._quick_pdo = f"V {int(raw[2:12], 2) / 20}-{int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+        try:
+            if int(field[-1]) < 8:
+                self._quick_pdo = f"V {int(raw[2:12], 2) / 20}-{int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+            else:
+                self._quick_pdo = f"EV {int(raw[2:12], 2) / 20}-{int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+        except:
+            if (int(raw[12:22], 2) / 20) <= 20:
+                self._quick_pdo = f"V {int(raw[2:12], 2) / 20}-{int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
+            else:
+                self._quick_pdo = f"EV {int(raw[2:12], 2) / 20}-{int(raw[12:22], 2) / 20}V@{int(raw[22:32], 2) / 100}A"
 
     def quick_pdo(self) -> str:
         return self._quick_pdo
