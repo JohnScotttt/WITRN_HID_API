@@ -1,12 +1,12 @@
 # Start of File
 # Copyright (c) 2025 JohnScotttt
-# Version 1.0.2
+# Version 1.0.3
 
 import hid
 import struct
 from datetime import timedelta, datetime
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 __flag__ = False
 
 
@@ -2417,8 +2417,8 @@ class WITRN_DEV:
             self.dev.open_path(path)
 
     def read_data(self) -> list:
-        self.timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.data = self.dev.read(64)
+        self.timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         return self.data
 
     def general_unpack(self, data: list = None) -> tuple[str, metadata]:
@@ -2445,14 +2445,13 @@ class WITRN_DEV:
             elif len(self.data) < 64:
                 raise ValueError("Data length is less than expected (64 bytes)")
             msg = pd_msg(self.data, self.last_pdo, self.last_ext, self.last_rdo)
-            if msg[2].field() == "Error Data":
-                return self.timestamp, msg
-            if is_pdo(msg):
-                self.last_pdo = msg
-            if provide_ext(msg):
-                self.last_ext = msg
-            if is_rdo(msg):
-                self.last_rdo = msg
+            if msg[2].field() != "Error Data":
+                if is_pdo(msg):
+                    self.last_pdo = msg
+                if provide_ext(msg):
+                    self.last_ext = msg
+                if is_rdo(msg):
+                    self.last_rdo = msg
             return self.timestamp, msg
         else:
             if len(data) < 64:

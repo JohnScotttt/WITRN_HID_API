@@ -1,6 +1,6 @@
 # 基于Python的WITRN HID通用API
 
-![version](https://img.shields.io/badge/Versio-1.0.2-green)
+![version](https://img.shields.io/badge/Versio-1.0.3-green)
 
 ## 项目介绍
 
@@ -57,6 +57,8 @@ import witrnhid
 当您 `print()` 一个metadata类时，它将默认返回`value` 的内容；当您请求了metadata类的可重建描述时，它将默认返回 `field` : `value` 组成的字符串。
 
 您可以对任意 `value` 为元数据list的元数据使用[index]或[field]来获取list中的元数据，其中field为想要获取的元数据的 `field` 。
+
+额外提供 `quick_pdo()` 、 `quick_rdo()` 、 `pdo()` 、 `full_raw()` 、 `raw_value()` 五个函数来调取附加内容，其中 `quick_pdo()` 和 `quick_rdo()` 提供PDO和RDO短预览， `pdo()` 提供RDO报文中所选的PDO， `full_raw()` 返回extend message消息中当前拼接好的raw， `raw_value()` 返回extend message消息中本报文的raw（此时的 `value()` 返回的是拼接后的 `value` ）
 
 ### 常规HID消息
 
