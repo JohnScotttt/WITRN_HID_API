@@ -4,14 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "witrnhid"
-version = "1.0.3"
+version = "1.1.4"
 description = "A Python API for WITRN HID devices."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name="JohnScott", email="ruaorz@gmail.com" }]
 license = { text = "LGPL-3.0-or-later" }
 dependencies = [
-    "hidapi>=0.14.0"
+    "hidapi>=0.14.0",
+    "usbpdparser==1.1.4"
 ]
 
 [project.urls]

@@ -1,10 +1,11 @@
 # Copyright (c) 2025 JohnScotttt
-# Version 1.0.3
+# Version 1.1.4
 
-__version__ = "1.0.3"
+__version__ = "1.1.4"
 
 K2_TARGET_VID = 0x0716
 K2_TARGET_PID = 0x5060
+ColorToken = tuple[str, str] # (style, text)
 
 
 class metadata:
@@ -66,3 +67,5 @@ def is_pdo(msg: metadata) -> bool: ...
 def is_rdo(msg: metadata) -> bool: ...
 
 def provide_ext(msg: metadata) -> bool: ...
+
+def renderer(data: list | metadata, level_thr: int) -> list[ColorToken]: ...

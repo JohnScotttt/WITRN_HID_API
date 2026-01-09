@@ -1,4 +1,4 @@
-from .core import metadata, WITRN_DEV, is_pdo, is_rdo, provide_ext
+from .core import metadata, WITRN_DEV, is_pdo, is_rdo, provide_ext, renderer
 from .core import __version__
 
 __all__ = ["metadata", "WITRN_DEV", "is_pdo", "is_rdo", "provide_ext"]

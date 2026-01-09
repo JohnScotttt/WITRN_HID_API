@@ -1,6 +1,6 @@
 # 基于Python的WITRN HID通用API
 
-![version](https://img.shields.io/badge/Versio-1.0.3-green)
+![version](https://img.shields.io/badge/Version-1.1.4-green)
 
 ## 项目介绍
 
@@ -11,6 +11,8 @@
 ## 项目进度&画饼
 
 伟大的正式版已发布
+
+从v1.1.4开始，项目将以[USB_PD_Parser_API_Py](https://pypi.org/project/usbpdparser/)作为标准库，通过继承的方式实现差异化接口，以减少重复代码并提高维护性。往后版本号将与标准库保持一致，开源协议保持不变（与标准库一致）。
 
 ## 使用
 
@@ -152,8 +154,6 @@ dev = WITRN_HID(debug=True)
 
 ### 一些工具函数
 
-从pre 0.2.1版本开始本项目还提供三个工具函数，分别是 `is_pdo(msg)` 、 `is_rdo(msg)` 、 `provide_ext(msg)` 。
-
 #### is_pdo(msg)
 
 该函数接收一个metadata类，判断其是否是一个PDO报文，返回bool类型。
@@ -182,6 +182,10 @@ if is_rdo(msg):
 Q：为什么不将判断写入WITRN_HID？
 
 A：事实上默认的流式解析是包含判断逻辑的，但是并不维护消息栈。而通过传参的方式解析不应该影响类的内部变量，所以需要通过外部判断。
+
+#### render(data, level_thr)
+
+该函数中 `data` 接收一个metadata类或以metadata类为元素的list，作为需要渲染的数据； `level_thr` 接收int作为raw格式展示十六进制或是二进制的划分等级，小于该显示级则显示为十六进制。返回一个元素为（color style, text）的元组，其中text包含换行信息，直接使用无换行打印即可预览metadata。
 
 ## License
 
