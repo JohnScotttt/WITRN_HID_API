@@ -1,7 +1,7 @@
 # Copyright (c) 2025 JohnScotttt
-# Version 1.1.4
+# Version 1.1.5
 
-__version__ = "1.1.4"
+__version__ = "1.1.5"
 
 K2_TARGET_VID = 0x0716
 K2_TARGET_PID = 0x5060

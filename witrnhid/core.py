@@ -1,5 +1,5 @@
 # Copyright (c) 2025 JohnScotttt
-# Version 1.1.4
+# Version 1.1.5
 
 from usbpdparser import Parser, metadata, is_pdo, is_rdo, provide_ext
 from usbpdparser.tools import renderer
@@ -7,7 +7,7 @@ import struct
 from datetime import timedelta, datetime
 import hid
 
-__version__ = "1.1.4"
+__version__ = "1.1.5"
 
 K2_TARGET_VID = 0x0716
 K2_TARGET_PID = 0x5060
